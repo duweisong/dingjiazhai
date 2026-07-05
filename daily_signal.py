@@ -116,9 +116,25 @@ def fetch_online_kline(code, days=150):
         return None
 
 def load_data(stocks):
-    """在线加载全部股票数据"""
+    """在线加载全部股票数据 + 指数行情"""
     all_data = {}
+    bench_df = None
     bs.login()
+    # 先获取指数
+    try:
+        end_d = pd.Timestamp.now().strftime('%Y-%m-%d')
+        rs = bs.query_history_k_data_plus('sh.000300', 'date,close',
+            start_date='2023-01-01', end_date=end_d, frequency='d', adjustflag='2')
+        if rs.error_code == '0':
+            data = []
+            while rs.next(): data.append(rs.get_row_data())
+            if len(data) >= 60:
+                bench_df = pd.DataFrame(data, columns=['date','close'])
+                bench_df['date'] = pd.to_datetime(bench_df['date'])
+                bench_df['close'] = pd.to_numeric(bench_df['close'], errors='coerce')
+    except: pass
+
+    # 获取个股
     for i, s in enumerate(stocks):
         code = s['code']
         df = fetch_online_kline(code)
@@ -127,28 +143,7 @@ def load_data(stocks):
         if (i+1) % 10 == 0:
             print(f'  已加载 {i+1}/{len(stocks)}...')
     bs.logout()
-    return all_data
-
-def fetch_index_kline():
-    """获取CSI300指数行情 (用于市场状态判断)"""
-    try:
-        bs.login()
-        rs = bs.query_history_k_data_plus('sh.000300',
-            'date,close', start_date='2023-01-01',
-            end_date=pd.Timestamp.now().strftime('%Y-%m-%d'),
-            frequency='d', adjustflag='2')
-        data = []
-        while rs.next(): data.append(rs.get_row_data())
-        bs.logout()
-        if len(data) < 60: return None
-        df = pd.DataFrame(data, columns=['date','close'])
-        df['date'] = pd.to_datetime(df['date'])
-        df['close'] = pd.to_numeric(df['close'], errors='coerce')
-        return df.sort_values('date').reset_index(drop=True)
-    except:
-        bs.logout()
-        return None
-
+    return all_data, bench_df
 
 # ====== 因子计算 ======
 def compute_factors(df, date_str):
@@ -422,9 +417,9 @@ def run_daily():
     stocks = get_csi300_list()
     print(f'[1/5] 股票池: {len(stocks)}只')
 
-    # 2. 在线加载数据
+    # 2. 在线加载数据 (含指数)
     print(f'[2/5] 在线获取行情数据...')
-    all_data = load_data(stocks)
+    all_data, bench_df = load_data(stocks)
     print(f'      已加载 {len(all_data)} 只股票')
 
     # 3. 评分
@@ -436,18 +431,21 @@ def run_daily():
     best = scored['score'].iloc[0]
     print(f'      最佳: {scored["code"].iloc[0]} {scored["name"].iloc[0]} score={best:.3f}')
 
-    # 4. 市场状态 (在线获取指数)
-    bench_df = fetch_index_kline()
+    # 4. 市场状态
     is_bear = False; is_strong = False
     idx_close = 0; ma_val = 0
-    if bench_df is not None:
+    if bench_df is not None and len(bench_df) >= BEAR_MA_PERIOD:
+        # 使用最新可用交易日 (非交易日回退)
+        bench_df = bench_df.sort_values('date')
+        last_date = bench_df['date'].iloc[-1]
+        last_date_str = last_date.strftime('%Y-%m-%d')
+        print(f'      指数数据: {len(bench_df)}条, 最新交易日: {last_date_str} close={bench_df["close"].iloc[-1]:.0f}')
+
         bench_ma = bench_df.set_index('date')['close'].rolling(BEAR_MA_PERIOD).mean()
-        dt = pd.Timestamp(date_str)
-        if dt in bench_ma.index:
-            idx_close = bench_df[bench_df['date'] == dt]['close'].iloc[0]
-            ma_val = bench_ma.loc[dt]
-            is_bear = idx_close < ma_val
-            is_strong = idx_close > ma_val * 1.05
+        idx_close = bench_df['close'].iloc[-1]
+        ma_val = bench_ma.loc[last_date]
+        is_bear = idx_close < ma_val
+        is_strong = idx_close > ma_val * 1.05
 
     max_pos = POS_BEAR if is_bear else (POS_STRONG if is_strong else POS_NEUTRAL)
     regime = 'BEAR' if is_bear else ('STRONG_BULL' if is_strong else 'NEUTRAL')
