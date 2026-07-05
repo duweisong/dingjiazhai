@@ -1,0 +1,20 @@
+# Strategy cache (large binary files)
+.strategy_cache/*.pkl
+.strategy_cache/*.json
+!live_portfolio.json
+
+# Python
+__pycache__/
+*.pyc
+
+# Temp files
+_toutiao_*.md
+_toutiao_*.html
+_baidu_*.*
+
+# IDE
+.claude/
+.vscode/
+
+# OS
+Thumbs.db
