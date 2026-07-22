@@ -28,25 +28,52 @@ EX = {'atm_low':1.2,'atm_high':2.0,'max_hold':10,'tp_std':0.12,'tp_top':0.15,
       'rank_out_ratio':0.75,'rank_drop':50,'sl_hard':-0.08,'sl_bear':-0.10,
       'ma_p':20,'atr_sl_mult':2.5,'tp_bear':0.10}  # Bear: wider SL, tighter TP
 
-N50 = {'600519':'GZMT','000858':'WLY','601318':'PA','600036':'CMB','000333':'Midea',
-    '600276':'HengRui','002415':'Hik','000001':'PAB','002594':'BYD','601888':'CTRIP',
-    '600030':'CITIC','000651':'Gree','600900':'Yangtze','002475':'Luxshare','300750':'CATL',
-    '601398':'ICBC','601166':'CIB','600887':'Yili','600809':'FJ','000568':'LZLJ',
-    '000002':'Vanke','601012':'LONGi','600585':'Conch','601668':'CSCEC','600028':'Sinopec',
-    '601857':'Petro','601088':'Shenhua','600309':'WHX','002352':'SF','300059':'EastMoney',
-    '002714':'Muyuan','000725':'BOE','688981':'SMIC','601899':'Zijin','600690':'Haier',
-    '601601':'CPIC','002304':'Yanghe','000338':'Weichai','300015':'Aier','600031':'SANY',
-    '601225':'SMY','002142':'NBB','600048':'Poly','601328':'BoCom','600016':'CMBC',
-    '601939':'CCB','601288':'ABC','600104':'SAIC','002271':'DFYS','600050':'Unicom'}
 C = {}
 
+def get_hs300_list():
+    """Fetch CSI300 constituent list from baostock (cached per day)"""
+    import baostock as bs
+    cache_file = os.path.join(CACHE_DIR, 'hs300_list.json')
+    today = pd.Timestamp.now().strftime('%Y%m%d')
+    if os.path.exists(cache_file):
+        import json
+        cached = json.load(open(cache_file, 'r', encoding='utf-8'))
+        if cached.get('date') == today:
+            return cached.get('stocks', {})
+    try:
+        bs.login()
+        rs = bs.query_hs300_stocks()
+        stocks = {}
+        if rs.error_code == '0':
+            while rs.next():
+                row = rs.get_row_data()
+                # Fields: updateDate, code, code_name
+                code = row[1].replace('sh.', '').replace('sz.', '')
+                name = row[2]
+                stocks[code] = name
+        bs.logout()
+        if stocks:
+            import json
+            json.dump({'date': today, 'stocks': stocks}, open(cache_file, 'w', encoding='utf-8'), ensure_ascii=False)
+        return stocks
+    except Exception as e:
+        print(f'[WARN] HS300 list fetch failed: {e}')
+        return {}
+
 def download_data():
-    """Download latest stock data from baostock for all N50 stocks + CSI300 index"""
+    """Download latest stock data from baostock for all HS300 stocks + CSI300 index"""
     import baostock as bs
     os.makedirs(CACHE_DIR, exist_ok=True)
     end_date = pd.Timestamp.now().strftime('%Y-%m-%d')
-    # Download enough history for factor calculations (need 120+ days lookback)
     start_date = (pd.Timestamp.now() - pd.Timedelta(days=365)).strftime('%Y-%m-%d')
+
+    # Get HS300 constituent list first (own session, cached per day)
+    stock_list = get_hs300_list()
+    print(f'HS300 constituents: {len(stock_list)} stocks')
+
+    if not stock_list:
+        print('[ERROR] Cannot fetch HS300 list, aborting data download')
+        return
 
     print(f'Downloading data: {start_date} ~ {end_date}')
     bs.login()
@@ -73,7 +100,7 @@ def download_data():
 
     # Download individual stocks
     success = 0
-    for code, name in N50.items():
+    for code, name in stock_list.items():
         try:
             bs_code = f'sh.{code}' if (code.startswith('6') or code.startswith('68')) else f'sz.{code}'
             rs = bs.query_history_k_data_plus(bs_code,
@@ -98,14 +125,23 @@ def download_data():
             pickle.dump({'df': df}, open(os.path.join(CACHE_DIR, f'{code}.pkl'), 'wb'))
             success += 1
             if success % 10 == 0:
-                print(f'  Downloaded {success}/{len(N50)} stocks...')
+                print(f'  Downloaded {success}/{len(stock_list)} stocks...')
         except Exception as e:
             print(f'  {code} ({name}) failed: {e}')
 
     bs.logout()
-    print(f'Downloaded {success}/{len(N50)} stocks successfully')
+    print(f'Downloaded {success}/{len(stock_list)} stocks successfully')
 
 def load():
+    # Load HS300 name map for display names
+    import json as _json
+    name_map = {}
+    hs300_file = os.path.join(CACHE_DIR, 'hs300_list.json')
+    if os.path.exists(hs300_file):
+        try:
+            name_map = _json.load(open(hs300_file, 'r', encoding='utf-8')).get('stocks', {})
+        except: pass
+
     skip_codes = {'000300', 'sh.000300', 'csi300_stocks'}
     for f in os.listdir(CACHE_DIR):
         if not f.endswith('.pkl'): continue
@@ -120,7 +156,7 @@ def load():
             required = ['open','high','low','close','volume','amount']
             if not all(c in df.columns for c in required):
                 continue
-            C[code] = {'name':N50.get(code,code),'df':df}
+            C[code] = {'name': name_map.get(code, code), 'df': df}
         except: pass
     print('Loaded',len(C),'stocks')
 
@@ -459,6 +495,9 @@ NAME_MAP = {
 }
 
 def get_name(code):
+    # Try HS300 dynamic list first, then fallback map, then raw code
+    if code in C and C[code].get('name', code) != code:
+        return C[code]['name']
     return NAME_MAP.get(code, code)
 
 # Generate markdown report
