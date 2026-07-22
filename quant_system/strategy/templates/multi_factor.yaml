@@ -1,0 +1,38 @@
+name: "Multi-Factor Strategy"
+version: "1.0"
+description: "Diversified multi-factor strategy: momentum + value + quality + low vol + size"
+
+universe_filter: "hs300,csi500"
+
+factor_exposures:
+  momentum_60d: 0.30
+  value_pe: 0.20
+  value_pb: 0.10
+  quality_roe: 0.15
+  volatility_20d: 0.15
+  size: 0.10
+
+signal_weights:
+  momentum_composite: 0.35
+  value_composite: 0.25
+  quality_composite: 0.20
+  vol_composite: 0.20
+
+regime_gating:
+  bear: "passive"
+  bull: "active"
+  neutral: "active"
+
+constraints:
+  max_weight: 0.08
+  min_positions: 10
+  max_positions: 30
+
+stop_loss_pct: 0.08
+take_profit_pct: 0.25
+trailing_stop_pct: 0.06
+max_single_position: 0.08
+max_sector_exposure: 0.25
+rebalance_freq: "weekly"
+position_method: "signal_strength"
+min_signal_strength: 0.3

@@ -1,0 +1,27 @@
+{
+  "issues": [],
+  "warnings": [
+    "Node 'file:patterns.py' has no edges (orphan)"
+  ],
+  "stats": {
+    "totalNodes": 25,
+    "totalEdges": 43,
+    "totalLayers": 6,
+    "tourSteps": 6,
+    "nodeTypes": {
+      "file": 19,
+      "class": 4,
+      "config": 1,
+      "document": 1
+    },
+    "edgeTypes": {
+      "imports": 27,
+      "contains": 4,
+      "calls": 2,
+      "inherits": 7,
+      "depends_on": 1,
+      "defines_schema": 1,
+      "documents": 1
+    }
+  }
+}

@@ -1,0 +1,179 @@
+{
+  "scriptCompleted": true,
+  "files": [
+    {
+      "path": ".understand-anything/config.json",
+      "language": "json",
+      "sizeLines": 1,
+      "fileCategory": "config"
+    },
+    {
+      "path": "config.py",
+      "language": "python",
+      "sizeLines": 53,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data_loader.py",
+      "language": "python",
+      "sizeLines": 311,
+      "fileCategory": "code"
+    },
+    {
+      "path": "engine.py",
+      "language": "python",
+      "sizeLines": 394,
+      "fileCategory": "code"
+    },
+    {
+      "path": "filters.py",
+      "language": "python",
+      "sizeLines": 342,
+      "fileCategory": "code"
+    },
+    {
+      "path": "main.py",
+      "language": "python",
+      "sizeLines": 435,
+      "fileCategory": "code"
+    },
+    {
+      "path": "metrics.py",
+      "language": "python",
+      "sizeLines": 116,
+      "fileCategory": "code"
+    },
+    {
+      "path": "optimizer.py",
+      "language": "python",
+      "sizeLines": 324,
+      "fileCategory": "code"
+    },
+    {
+      "path": "output/advanced_swing_optimized_report.html",
+      "language": "html",
+      "sizeLines": 686,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "output/ma_cross_optimized_report.html",
+      "language": "html",
+      "sizeLines": 686,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "output/ma_cross_report.html",
+      "language": "html",
+      "sizeLines": 686,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "output/pattern_enhanced_report.html",
+      "language": "html",
+      "sizeLines": 686,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "output/volume_breakout_optimized_report.html",
+      "language": "html",
+      "sizeLines": 616,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "output/volume_breakout_report.html",
+      "language": "html",
+      "sizeLines": 536,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "patterns.py",
+      "language": "python",
+      "sizeLines": 268,
+      "fileCategory": "code"
+    },
+    {
+      "path": "requirements.txt",
+      "language": "txt",
+      "sizeLines": 6,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "strategies/__init__.py",
+      "language": "python",
+      "sizeLines": 48,
+      "fileCategory": "code"
+    },
+    {
+      "path": "strategies/advanced_swing.py",
+      "language": "python",
+      "sizeLines": 452,
+      "fileCategory": "code"
+    },
+    {
+      "path": "strategies/base.py",
+      "language": "python",
+      "sizeLines": 59,
+      "fileCategory": "code"
+    },
+    {
+      "path": "strategies/bollinger.py",
+      "language": "python",
+      "sizeLines": 53,
+      "fileCategory": "code"
+    },
+    {
+      "path": "strategies/composite.py",
+      "language": "python",
+      "sizeLines": 89,
+      "fileCategory": "code"
+    },
+    {
+      "path": "strategies/ma_cross.py",
+      "language": "python",
+      "sizeLines": 60,
+      "fileCategory": "code"
+    },
+    {
+      "path": "strategies/macd.py",
+      "language": "python",
+      "sizeLines": 51,
+      "fileCategory": "code"
+    },
+    {
+      "path": "strategies/pattern_swing.py",
+      "language": "python",
+      "sizeLines": 215,
+      "fileCategory": "code"
+    },
+    {
+      "path": "strategies/rsi.py",
+      "language": "python",
+      "sizeLines": 54,
+      "fileCategory": "code"
+    },
+    {
+      "path": "visualize.py",
+      "language": "python",
+      "sizeLines": 391,
+      "fileCategory": "code"
+    }
+  ],
+  "totalFiles": 26,
+  "filteredByIgnore": 0,
+  "estimatedComplexity": "small",
+  "stats": {
+    "filesScanned": 26,
+    "byCategory": {
+      "config": 1,
+      "code": 18,
+      "markup": 6,
+      "docs": 1
+    },
+    "byLanguage": {
+      "json": 1,
+      "python": 18,
+      "html": 6,
+      "txt": 1
+    }
+  }
+}

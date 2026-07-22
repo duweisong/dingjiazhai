@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>网格回测 · A股网格交易回测系统</title>
+
+<script
+  src="https://registry.npmmirror.com/react/18.3.1/files/umd/react.development.js"
+  integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L"
+  crossorigin="anonymous"
+></script>
+<script
+  src="https://registry.npmmirror.com/react-dom/18.3.1/files/umd/react-dom.development.js"
+  integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm"
+  crossorigin="anonymous"
+></script>
+<script
+  src="https://registry.npmmirror.com/@babel/standalone/7.29.0/files/babel.min.js"
+  integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y"
+  crossorigin="anonymous"
+></script>
+
+<style>
+  :root {
+    --bg-root: oklch(96% 0.005 255);
+    --bg-surface: #fff;
+    --border: oklch(92% 0 0);
+    --border-light: oklch(95% 0 0);
+    --text-primary: oklch(22% 0 0);
+    --text-secondary: oklch(50% 0 0);
+    --text-tertiary: oklch(62% 0 0);
+    --accent: oklch(55% 0.18 250);
+    --accent-light: oklch(65% 0.12 250 / 0.12);
+    --green: oklch(58% 0.18 170);
+    --red: oklch(48% 0.2 20);
+    --amber: oklch(65% 0.15 80);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow-sm: 0 1px 3px oklch(0% 0 0 / 0.06);
+    --shadow-md: 0 4px 16px oklch(0% 0 0 / 0.08);
+    --font: ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --font-mono: ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, Consolas, monospace;
+  }
+
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{font-size:16px}
+  body{
+    background:var(--bg-root);color:var(--text-primary);
+    font-family:var(--font);-webkit-font-smoothing:antialiased;
+  }
+  input,button,select{font-family:inherit}
+
+  .app{display:grid;grid-template-columns:340px 1fr;grid-template-rows:52px 1fr;height:100vh;overflow:hidden}
+  @media(max-width:860px){.app{grid-template-columns:1fr}.sidebar-panel{display:none}}
+
+  .topbar{
+    grid-column:1/-1;display:flex;align-items:center;gap:12px;
+    padding:0 20px;background:var(--bg-surface);
+    border-bottom:1px solid var(--border);z-index:20;
+  }
+  .topbar-brand{font-size:14px;font-weight:700;letter-spacing:-0.02em;color:var(--text-primary);white-space:nowrap}
+  .topbar-badge{
+    font-size:10px;padding:2px 7px;border-radius:4px;
+    background:oklch(93% 0.04 250);color:oklch(45% 0.12 250);
+    font-weight:600;letter-spacing:0.03em;
+  }
+  .topbar-spacer{flex:1}
+  .topbar-mode{display:flex;gap:2px;background:var(--bg-root);border-radius:8px;padding:3px}
+  .topbar-mode-btn{
+    font-size:11px;padding:4px 10px;border:none;border-radius:6px;
+    background:transparent;color:var(--text-secondary);cursor:pointer;
+    font-weight:500;transition:all 0.15s;
+  }
+  .topbar-mode-btn.active{background:white;color:var(--text-primary);box-shadow:var(--shadow-sm)}
+
+  .sidebar-panel{
+    background:var(--bg-surface);border-right:1px solid var(--border);
+    padding:16px 18px;display:flex;flex-direction:column;gap:14px;
+    overflow-y:auto;z-index:10;
+  }
+  .sidebar-block{display:flex;flex-direction:column;gap:5px}
+  .sidebar-label{
+    font-size:10px;font-weight:600;text-transform:uppercase;
+    letter-spacing:0.06em;color:var(--text-tertiary);
+  }
+  .sidebar-divider{border:none;border-top:1px solid var(--border-light);margin:2px 0}
+
+  .stock-pick{
+    display:flex;align-items:center;gap:8px;padding:8px 12px;
+    border-radius:var(--radius-sm);background:var(--bg-root);
+    border:1px solid var(--border);cursor:pointer;
+    transition:border-color 0.15s;
+  }
+  .stock-pick:hover{border-color:var(--accent)}
+  .stock-pick-code{font-size:13px;font-weight:700;color:var(--text-primary);font-variant-numeric:tabular-nums}
+  .stock-pick-name{font-size:12px;color:var(--text-secondary)}
+  .stock-pick-market{font-size:10px;color:var(--text-tertiary);margin-left:auto}
+
+  .date-row{display:flex;align-items:center;gap:6px}
+  .date-input{
+    flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:6px;
+    font-size:11px;color:var(--text-primary);background:var(--bg-surface);
+    font-variant-numeric:tabular-nums;
+  }
+  .date-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-light)}
+
+  .slider-row{display:flex;align-items:center;gap:8px}
+  .slider-input{
+    flex:1;height:4px;-webkit-appearance:none;appearance:none;
+    background:oklch(90% 0 0);border-radius:2px;outline:none;
+  }
+  .slider-input::-webkit-slider-thumb{
+    -webkit-appearance:none;width:18px;height:18px;border-radius:50%;
+    background:var(--accent);cursor:pointer;border:2px solid white;
+    box-shadow:0 1px 4px oklch(0% 0 0/0.15);
+  }
+  .slider-val{
+    font-size:12px;font-weight:600;color:var(--text-primary);
+    min-width:42px;text-align:right;font-variant-numeric:tabular-nums;
+  }
+
+  .toggle-row{display:flex;align-items:center;justify-content:space-between}
+  .toggle-label{font-size:12px;color:var(--text-secondary)}
+  .toggle{
+    width:36px;height:20px;border-radius:10px;border:none;
+    background:oklch(88% 0 0);cursor:pointer;position:relative;
+    transition:background 0.2s;
+  }
+  .toggle.on{background:var(--accent)}
+  .toggle::after{
+    content:"";position:absolute;top:2px;left:2px;
+    width:16px;height:16px;border-radius:50%;background:white;
+    transition:transform 0.2s;box-shadow:0 1px 2px oklch(0% 0 0/0.15);
+  }
+  .toggle.on::after{transform:translateX(16px)}
+
+  .btn{
+    width:100%;padding:9px 0;border:none;border-radius:var(--radius-sm);
+    font-size:12px;font-weight:600;cursor:pointer;
+    transition:transform 0.1s,box-shadow 0.1s,opacity 0.15s;
+  }
+  .btn:active{transform:scale(0.97)}
+  .btn-primary{
+    background:var(--accent);color:white;
+    box-shadow:0 2px 8px oklch(55% 0.18 250 / 0.25);
+  }
+  .btn-primary:hover{box-shadow:0 4px 16px oklch(55% 0.18 250 / 0.35)}
+  .btn-secondary{
+    background:var(--bg-root);color:var(--text-secondary);
+    border:1px solid var(--border);
+  }
+  .btn-secondary:hover{color:var(--text-primary);border-color:oklch(75% 0 0)}
+  .btn:disabled{opacity:0.45;cursor:not-allowed;transform:none;box-shadow:none}
+
+  .stock-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px;max-height:160px;overflow-y:auto}
+  .stock-chip{
+    font-size:10px;padding:5px 8px;border-radius:5px;
+    background:var(--bg-root);color:var(--text-secondary);
+    border:1px solid transparent;cursor:pointer;text-align:left;
+    transition:all 0.12s;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+  }
+  .stock-chip:hover{border-color:var(--accent);color:var(--text-primary)}
+  .stock-chip.selected{background:var(--accent-light);color:var(--accent);border-color:var(--accent);font-weight:600}
+
+  .main-area{padding:16px 20px;overflow-y:auto;display:flex;flex-direction:column;gap:12px}
+  .main-status{
+    font-size:10px;color:var(--text-tertiary);text-transform:uppercase;
+    letter-spacing:0.05em;display:flex;align-items:center;gap:8px;
+  }
+  .main-status-dot{width:6px;height:6px;border-radius:50%}
+  .main-status-dot.idle{background:oklch(75% 0 0)}
+  .main-status-dot.running{background:var(--accent);animation:pulse 1.2s infinite}
+  .main-status-dot.done{background:var(--green)}
+  .main-status-dot.error{background:var(--red)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+
+  .kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+  @media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(3,1fr)}}
+  @media(max-width:700px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+
+  .kpi-card{
+    background:var(--bg-surface);border-radius:var(--radius);padding:14px 16px;
+    display:flex;flex-direction:column;gap:3px;
+    border:1px solid var(--border);position:relative;overflow:hidden;
+    transition:box-shadow 0.2s;
+  }
+  .kpi-card:hover{box-shadow:var(--shadow-md)}
+  .kpi-card::before{
+    content:"";position:absolute;top:0;left:0;right:0;height:3px;
+    border-radius:var(--radius) var(--radius) 0 0;
+  }
+  .kpi-card.accent-green::before{background:var(--green)}
+  .kpi-card.accent-blue::before{background:var(--accent)}
+  .kpi-card.accent-red::before{background:var(--red)}
+  .kpi-card.accent-amber::before{background:var(--amber)}
+  .kpi-label{font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.05em}
+  .kpi-value{font-size:24px;font-weight:700;letter-spacing:-0.03em;color:var(--text-primary);font-variant-numeric:tabular-nums}
+  .kpi-sub{font-size:10px;color:var(--text-tertiary);line-height:1.4}
+
+  .bento-row{display:grid;grid-template-columns:3fr 2fr;gap:10px;flex:1;min-height:200px}
+  @media(max-width:1100px){.bento-row{grid-template-columns:1fr}}
+  .bento-card{
+    background:var(--bg-surface);border-radius:var(--radius);padding:14px 16px;
+    border:1px solid var(--border);display:flex;flex-direction:column;gap:8px;
+    overflow:hidden;
+  }
+  .bento-title{
+    font-size:10px;font-weight:600;color:var(--text-secondary);
+    text-transform:uppercase;letter-spacing:0.05em;
+  }
+
+  .chart-wrap{flex:1;position:relative;min-height:160px}
+  .chart-wrap svg{width:100%;height:100%;position:absolute;top:0;left:0}
+  .chart-legend{display:flex;gap:14px;font-size:10px;color:var(--text-tertiary)}
+  .chart-legend span{display:flex;align-items:center;gap:4px}
+  .chart-dot{width:7px;height:7px;border-radius:50%}
+
+  .trade-list{flex:1;overflow-y:auto;min-height:0}
+  .trade-header,.trade-item{
+    display:grid;grid-template-columns:1fr 56px 58px 50px 1fr;
+    gap:6px;padding:5px 0;font-size:11px;align-items:center;
+    border-bottom:1px solid var(--border-light);
+  }
+  .trade-header{font-size:9px;color:var(--text-tertiary);font-weight:600;text-transform:uppercase;letter-spacing:0.04em;position:sticky;top:0;background:var(--bg-surface)}
+  .trade-date{color:var(--text-secondary);font-variant-numeric:tabular-nums}
+  .trade-action{font-weight:600}
+  .trade-action.buy{color:var(--green)}
+  .trade-action.sell{color:var(--red)}
+  .trade-price,.trade-shares{text-align:right;font-variant-numeric:tabular-nums}
+  .trade-shares{color:var(--text-tertiary)}
+  .trade-reason{color:var(--text-tertiary)}
+
+  .scan-table{width:100%;border-collapse:collapse;font-size:11px}
+  .scan-table th{
+    font-size:9px;color:var(--text-tertiary);font-weight:600;
+    text-transform:uppercase;letter-spacing:0.04em;text-align:left;
+    padding:6px 8px;border-bottom:1px solid var(--border);
+  }
+  .scan-table td{
+    padding:6px 8px;border-bottom:1px solid var(--border-light);
+    color:var(--text-secondary);font-variant-numeric:tabular-nums;
+  }
+  .scan-table tr:hover td{background:var(--bg-root)}
+  .scan-rank{font-weight:700;color:var(--text-primary)}
+
+  .empty-state{
+    flex:1;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:8px;color:var(--text-tertiary);
+  }
+  .empty-icon{font-size:40px;opacity:0.4}
+  .empty-text{font-size:13px}
+  .empty-sub{font-size:11px}
+
+  .error-box{
+    background:oklch(95% 0.03 20);border:1px solid oklch(85% 0.08 20);
+    border-radius:var(--radius-sm);padding:12px 16px;font-size:12px;
+    color:var(--red);
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+
+const API = "";
+
+async function apiCall(url, body) {
+  const resp = await fetch(API + url, {
+    method: body ? "POST" : "GET",
+    headers: body ? {"Content-Type":"application/json"} : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!resp.ok) {
+    const data = await resp.json().catch(()=>({}));
+    throw new Error(data.error || `HTTP ${resp.status}`);
+  }
+  return resp.json();
+}
+
+// ============================================================
+// SVG Chart
+// ============================================================
+function EquityChart({equity}) {
+  if(!equity||equity.length<2) return null;
+
+  const w=600,h=220,pad={t:18,r:12,b:24,l:48};
+  const pw=w-pad.l-pad.r, ph=h-pad.t-pad.b;
+
+  const values=equity.map(d=>d.total_value);
+  const min=Math.min(...values), max=Math.max(...values);
+  const range=max-min||1;
+
+  const xs=values.map((_,i)=>pad.l+(i/(values.length-1))*pw);
+  const ys=values.map(v=>pad.t+ph-(v-min)/range*ph);
+
+  const pathD=ys.map((y,i)=>`${i===0?'M':'L'}${xs[i].toFixed(1)},${y.toFixed(1)}`).join(' ');
+  const areaD=`${pathD} L${xs[xs.length-1].toFixed(1)},${pad.t+ph} L${xs[0].toFixed(1)},${pad.t+ph} Z`;
+  const baselineY=pad.t+ph-(100000-min)/range*ph;
+
+  const yTicks=[min,100000,max];
+
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="xMidYMid meet">
+      {yTicks.map((v,i)=>{
+        const y=pad.t+ph-(v-min)/range*ph;
+        return <line key={i} x1={pad.l} y1={y} x2={w-pad.r} y2={y} stroke="oklch(90% 0 0)" strokeWidth="1"/>;
+      })}
+      <line x1={pad.l} y1={baselineY} x2={w-pad.r} y2={baselineY}
+        stroke="oklch(85% 0 0)" strokeWidth="1" strokeDasharray="5,4"/>
+      <path d={areaD} fill="oklch(58% 0.18 250 / 0.08)"/>
+      <path d={pathD} fill="none" stroke="oklch(55% 0.18 250)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      {yTicks.map((v,i)=>{
+        const y=pad.t+ph-(v-min)/range*ph;
+        const text = v>=10000 ? (v/10000).toFixed(1)+'万' : v.toFixed(0);
+        return <text key={i} x={pad.l-6} y={y+3} textAnchor="end" fill="oklch(60% 0 0)" fontSize="9" fontFamily="system-ui">{text}</text>;
+      })}
+      <text x={w-pad.r} y={baselineY-4} textAnchor="end" fill="oklch(70% 0 0)" fontSize="8" fontFamily="system-ui">初始 ¥100,000</text>
+    </svg>
+  );
+}
+
+// ============================================================
+// KPI Card
+// ============================================================
+function KpiCard({label,value,sub,accent}) {
+  return (
+    <div className={`kpi-card${accent?' accent-'+accent:''}`}>
+      <span className="kpi-label">{label}</span>
+      <span className="kpi-value">{value}</span>
+      <span className="kpi-sub">{sub}</span>
+    </div>
+  );
+}
+
+// ============================================================
+// App
+// ============================================================
+function App() {
+  const [stocks,setStocks]=React.useState([]);
+  const [stock,setStock]=React.useState(null);
+  const [startDate,setStartDate]=React.useState("2020-01-01");
+  const [endDate,setEndDate]=React.useState("2025-12-31");
+  const [period,setPeriod]=React.useState(240);
+  const [levels,setLevels]=React.useState(11);
+  const [step,setStep]=React.useState(0.5);
+  const [useGate,setUseGate]=React.useState(false);
+  const [mode,setMode]=React.useState("single");
+  const [showPool,setShowPool]=React.useState(false);
+
+  const [status,setStatus]=React.useState("idle");
+  const [error,setError]=React.useState(null);
+  const [result,setResult]=React.useState(null);
+  const [scanResults,setScanResults]=React.useState(null);
+  const [poolResults,setPoolResults]=React.useState(null);
+
+  // Load stock pool on mount
+  React.useEffect(()=>{
+    apiCall("/api/stocks").then(data=>{
+      setStocks(data);
+      if(data.length>0) setStock(data[0]);
+    }).catch(()=>{});
+  },[]);
+
+  // Keyboard shortcuts
+  React.useEffect(()=>{
+    const handler=(e)=>{
+      if(e.ctrlKey&&e.key==="1"){e.preventDefault();setMode("single")}
+      if(e.ctrlKey&&e.key==="2"){e.preventDefault();setMode("scan")}
+      if(e.ctrlKey&&e.key==="3"){e.preventDefault();setMode("pool")}
+    };
+    window.addEventListener("keydown",handler);
+    return ()=>window.removeEventListener("keydown",handler);
+  },[]);
+
+  const gridStep = step/100;
+
+  async function runBacktest() {
+    if(!stock) return;
+    setStatus("running");setError(null);setResult(null);setScanResults(null);setPoolResults(null);
+    try {
+      const data = await apiCall("/api/backtest",{
+        symbol:stock.code, market:stock.market,
+        start_date:startDate, end_date:endDate,
+        grid_period:period, grid_levels:levels,
+        grid_step:gridStep, use_ma_gate:useGate,
+      });
+      if(data.success) setResult(data.result);
+      else setError(data.error);
+      setStatus("done");
+    } catch(e) {
+      setError(e.message);setStatus("error");
+    }
+  }
+
+  async function runScan() {
+    if(!stock) return;
+    setStatus("running");setError(null);setResult(null);setScanResults(null);setPoolResults(null);
+    try {
+      const data = await apiCall("/api/scan",{
+        symbol:stock.code, market:stock.market,
+        start_date:startDate, end_date:endDate,
+        use_ma_gate:useGate,
+      });
+      if(data.success) setScanResults(data.results);
+      else setError(data.error);
+      setStatus("done");
+    } catch(e) {
+      setError(e.message);setStatus("error");
+    }
+  }
+
+  async function runPool() {
+    setStatus("running");setError(null);setResult(null);setScanResults(null);setPoolResults(null);
+    try {
+      const data = await apiCall("/api/pool",{
+        start_date:startDate, end_date:endDate,
+        grid_period:period, grid_levels:levels,
+        grid_step:gridStep, use_ma_gate:useGate,
+      });
+      if(data.success) setPoolResults(data.results);
+      else setError(data.error);
+      setStatus("done");
+    } catch(e) {
+      setError(e.message);setStatus("error");
+    }
+  }
+
+  const statusDotClass = `main-status-dot ${status}`;
+  const stockLabel = stock ? `${stock.code} ${stock.name}` : "加载中…";
+
+  return (
+    <div className="app">
+      {/* ===== Top Bar ===== */}
+      <div className="topbar">
+        <span className="topbar-brand">网格回测</span>
+        <span className="topbar-badge">Live</span>
+        <span className="topbar-spacer"/>
+        <div className="topbar-mode">
+          {[["single","单次回测"],["scan","参数扫描"],["pool","标的池"]].map(([m,label])=>(
+            <button key={m} className={`topbar-mode-btn${mode===m?' active':''}`}
+              onClick={()=>setMode(m)}>{label}</button>
+          ))}
+        </div>
+        <span style={{fontSize:9,color:"oklch(55% 0 0)"}}>Ctrl+1/2/3</span>
+      </div>
+
+      {/* ===== Sidebar ===== */}
+      <div className="sidebar-panel">
+        <div className="sidebar-block">
+          <span className="sidebar-label">标的</span>
+          <div className="stock-pick" onClick={()=>setShowPool(!showPool)}>
+            <span className="stock-pick-code">{stock?.code||"---"}</span>
+            <span className="stock-pick-name">{stock?.name||"---"}</span>
+            <span className="stock-pick-market">{stock?.market||""}</span>
+            <span style={{fontSize:9,color:"oklch(65% 0 0)"}}>{showPool?"▲":"▼"}</span>
+          </div>
+          {showPool && (
+            <div className="stock-grid">
+              {stocks.map(s=>(
+                <button key={s.code}
+                  className={`stock-chip${stock&&s.code===stock.code?' selected':''}`}
+                  onClick={()=>{setStock(s);setShowPool(false);setResult(null);setStatus("idle");setError(null)}}>
+                  {s.code} {s.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <hr className="sidebar-divider"/>
+
+        <div className="sidebar-block">
+          <span className="sidebar-label">日期范围</span>
+          <div className="date-row">
+            <input className="date-input" type="text" value={startDate} onChange={e=>setStartDate(e.target.value)}/>
+            <span style={{fontSize:10,color:"oklch(65% 0 0)"}}>—</span>
+            <input className="date-input" type="text" value={endDate} onChange={e=>setEndDate(e.target.value)}/>
+          </div>
+        </div>
+
+        <div className="sidebar-block">
+          <span className="sidebar-label">回溯周期</span>
+          <div className="slider-row">
+            <input className="slider-input" type="range" min="60" max="720" step="20" value={period}
+              onChange={e=>setPeriod(Number(e.target.value))}/>
+            <span className="slider-val">{period} 日</span>
+          </div>
+        </div>
+
+        <div className="sidebar-block">
+          <span className="sidebar-label">网格档位</span>
+          <div className="slider-row">
+            <input className="slider-input" type="range" min="5" max="21" step="2" value={levels}
+              onChange={e=>setLevels(Number(e.target.value))}/>
+            <span className="slider-val">{levels} 档</span>
+          </div>
+        </div>
+
+        <div className="sidebar-block">
+          <span className="sidebar-label">每档步长</span>
+          <div className="slider-row">
+            <input className="slider-input" type="range" min="0.1" max="3.0" step="0.1" value={step}
+              onChange={e=>setStep(Number(e.target.value))}/>
+            <span className="slider-val">{step.toFixed(1)}%</span>
+          </div>
+        </div>
+
+        <hr className="sidebar-divider"/>
+
+        <div className="toggle-row">
+          <span className="toggle-label">MA60 闸门</span>
+          <button className={`toggle${useGate?' on':''}`} onClick={()=>setUseGate(!useGate)}/>
+        </div>
+
+        <div style={{display:"flex",flexDirection:"column",gap:6,marginTop:4}}>
+          <button className="btn btn-primary" onClick={runBacktest} disabled={status==="running"||!stock}>
+            {status==="running"?"⏳ 运行中…":"▶ 运行回测"}
+          </button>
+          <button className="btn btn-secondary" onClick={runScan} disabled={status==="running"||!stock}>
+            🔍 参数扫描
+          </button>
+          <button className="btn btn-secondary" onClick={runPool} disabled={status==="running"}>
+            📊 标的池扫描
+          </button>
+        </div>
+      </div>
+
+      {/* ===== Main Area ===== */}
+      <div className="main-area">
+        <div className="main-status">
+          <span className={statusDotClass}/>
+          <span>
+            {status==="idle"&&"就绪 — 点击「运行回测」开始"}
+            {status==="running"&&`回测中… ${stockLabel}`}
+            {status==="done"&&`完成 · ${stockLabel}`}
+            {status==="error"&&"回测失败"}
+          </span>
+          <span style={{marginLeft:"auto",fontSize:9,fontFamily:"var(--font-mono)",color:"oklch(55% 0 0)"}}>
+            {period}日 · {levels}档 · {step.toFixed(1)}%
+          </span>
+        </div>
+
+        {error && <div className="error-box">⚠ {error}</div>}
+
+        {/* ===== SINGLE ===== */}
+        {mode==="single" && result && (
+          <>
+            <div className="kpi-grid">
+              <KpiCard label="总收益"
+                value={`${result.total_return_pct>0?'+':''}${result.total_return_pct.toFixed(1)}%`}
+                sub={`年化 ${result.annualized_return_pct>0?'+':''}${result.annualized_return_pct.toFixed(1)}%`}
+                accent="green"/>
+              <KpiCard label="夏普比率"
+                value={result.sharpe_ratio.toFixed(2)}
+                sub="无风险利率 3%" accent="blue"/>
+              <KpiCard label="最大回撤"
+                value={`${result.max_drawdown_pct.toFixed(1)}%`}
+                sub={`卡尔玛 ${result.calmar_ratio.toFixed(2)}`}
+                accent="red"/>
+              <KpiCard label="胜率"
+                value={`${result.win_rate.toFixed(1)}%`}
+                sub={`${result.profit_trades} 赢 / ${result.total_trades-result.profit_trades} 亏 / ${result.total_trades} 笔`}
+                accent="amber"/>
+              <KpiCard label="最终资金"
+                value={`¥${Math.round(result.final_value).toLocaleString()}`}
+                sub={`初始 ¥100,000 · 基准 ${result.benchmark_return_pct>0?'+':''}${result.benchmark_return_pct.toFixed(1)}%`}
+                accent=""/>
+            </div>
+
+            <div className="bento-row">
+              <div className="bento-card">
+                <span className="bento-title">权益曲线</span>
+                <div className="chart-wrap">
+                  <EquityChart equity={result.equity}/>
+                </div>
+                <div className="chart-legend">
+                  <span><span className="chart-dot" style={{background:"oklch(55% 0.18 250)"}}/>策略权益</span>
+                  <span><span className="chart-dot" style={{background:"oklch(85% 0 0)"}}/>初始资金</span>
+                </div>
+              </div>
+
+              <div className="bento-card">
+                <span className="bento-title">最近交易 · {result.total_trades} 笔</span>
+                <div className="trade-header">
+                  <span>日期</span><span>方向</span><span style={{textAlign:"right"}}>价格</span><span style={{textAlign:"right"}}>股数</span><span>原因</span>
+                </div>
+                <div className="trade-list">
+                  {result.trades.map((t,i)=>(
+                    <div key={i} className="trade-item">
+                      <span className="trade-date">{t.date}</span>
+                      <span className={`trade-action ${t.action.includes("BUY")?"buy":"sell"}`}>
+                        {t.action.includes("BUY")?"BUY":"SELL"}
+                      </span>
+                      <span className="trade-price">{typeof t.price==='number'?t.price.toFixed(2):t.price}</span>
+                      <span className="trade-shares">{t.shares}</span>
+                      <span className="trade-reason">{t.reason}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* ===== SCAN ===== */}
+        {mode==="scan" && scanResults && (
+          <div className="bento-card" style={{flex:1}}>
+            <span className="bento-title">参数扫描 · Top 10 (按夏普比率) · 共 {scanResults.length} 组</span>
+            <div style={{overflow:"auto",flex:1}}>
+              <table className="scan-table">
+                <thead><tr>
+                  <th>#</th><th>步长</th><th>周期</th><th>档位</th>
+                  <th>年化收益</th><th>夏普</th><th>最大回撤</th><th>胜率</th>
+                </tr></thead>
+                <tbody>
+                  {scanResults.slice(0,10).map((r,i)=>(
+                    <tr key={i}>
+                      <td className="scan-rank">{i+1}</td>
+                      <td>{(r.grid_step*100).toFixed(1)}%</td>
+                      <td>{r.grid_period} 日</td>
+                      <td>{r.grid_levels} 档</td>
+                      <td style={{color:r.annualized_return_pct>0?"oklch(50% 0.15 170)":"oklch(45% 0.18 20)"}}>
+                        {r.annualized_return_pct>0?"+":""}{r.annualized_return_pct.toFixed(1)}%
+                      </td>
+                      <td style={{fontWeight:600,color:"oklch(35% 0 0)"}}>{r.sharpe_ratio.toFixed(2)}</td>
+                      <td style={{color:"oklch(45% 0.18 20)"}}>{r.max_drawdown_pct.toFixed(1)}%</td>
+                      <td>{r.win_rate.toFixed(0)}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ===== POOL ===== */}
+        {mode==="pool" && poolResults && (
+          <div className="bento-card" style={{flex:1}}>
+            <span className="bento-title">标的池扫描 · 按夏普比率排名 · {poolResults.length} 只标的</span>
+            <div style={{overflow:"auto",flex:1}}>
+              <table className="scan-table">
+                <thead><tr>
+                  <th>#</th><th>代码</th><th>名称</th><th>年化收益</th>
+                  <th>夏普</th><th>最大回撤</th><th>胜率</th><th>最终资金</th>
+                </tr></thead>
+                <tbody>
+                  {poolResults.map((r,i)=>(
+                    <tr key={i} style={{cursor:"pointer"}}
+                      onClick={()=>{
+                        const s=stocks.find(s=>s.code===r.symbol);
+                        if(s){setStock(s);setMode("single");setResult(null);setStatus("idle")}
+                      }}>
+                      <td className="scan-rank">{i+1}</td>
+                      <td style={{fontWeight:600}}>{r.symbol}</td><td>{r.name}</td>
+                      <td style={{color:r.annualized_return_pct>0?"oklch(50% 0.15 170)":"oklch(45% 0.18 20)"}}>
+                        {r.annualized_return_pct>0?"+":""}{r.annualized_return_pct.toFixed(1)}%
+                      </td>
+                      <td style={{fontWeight:600,color:"oklch(35% 0 0)"}}>{r.sharpe_ratio.toFixed(2)}</td>
+                      <td style={{color:"oklch(45% 0.18 20)"}}>{r.max_drawdown_pct.toFixed(1)}%</td>
+                      <td>{r.win_rate.toFixed(0)}%</td>
+                      <td>¥{Math.round(r.final_value).toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ===== Empty / Loading ===== */}
+        {status==="idle" && !result && !scanResults && !poolResults && (
+          <div className="empty-state">
+            <span className="empty-icon">📊</span>
+            <span className="empty-text">点击「运行回测」查看结果</span>
+            <span className="empty-sub">或切换到「参数扫描」/「标的池」模式探索最优策略</span>
+          </div>
+        )}
+
+        {status==="running" && (
+          <div className="empty-state">
+            <span className="empty-icon" style={{animation:"pulse 1.2s infinite"}}>⏳</span>
+            <span className="empty-text">回测运行中…</span>
+            <span className="empty-sub">{stockLabel} · {period}日 · {levels}档 · {step.toFixed(1)}%</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

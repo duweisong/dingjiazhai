@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>回测报告: advanced_swing_optimized</title>
+<style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif; background:#f5f7fa; color:#333; padding:20px; }
+    .container { max-width:1200px; margin:0 auto; }
+    h1 { color:#1a73e8; margin-bottom:10px; }
+    .subtitle { color:#666; margin-bottom:30px; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:24px; }
+    .card { background:#fff; border-radius:12px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.08); }
+    .card h3 { font-size:12px; color:#888; text-transform:uppercase; margin-bottom:8px; }
+    .card .value { font-size:28px; font-weight:700; }
+    .card .positive { color:#4caf50; }
+    .card .negative { color:#f44336; }
+    table { width:100%; border-collapse:collapse; margin:16px 0; background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.08); }
+    th { background:#1a73e8; color:#fff; padding:10px 12px; text-align:left; font-size:13px; }
+    td { padding:8px 12px; border-bottom:1px solid #eee; font-size:13px; }
+    tr:hover { background:#f5f8ff; }
+    .section { margin:30px 0 16px; }
+    .section h2 { font-size:18px; color:#1a73e8; border-left:4px solid #1a73e8; padding-left:12px; }
+    .flex { display:flex; gap:20px; flex-wrap:wrap; }
+    .flex-item { flex:1; min-width:400px; }
+    img { max-width:100%; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
+    .footer { text-align:center; color:#aaa; font-size:12px; margin-top:40px; padding:20px; }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>📊 advanced_swing_optimized 回测报告</h1>
+    <p class="subtitle">2020-01-02 ~ 2025-12-31 | 联创电子 (002036.SZ) | 波段策略</p>
+
+    <div class="grid">
+        <div class="card">
+            <h3>总收益率</h3>
+            <div class="value negative">-15.25%</div>
+        </div>
+        <div class="card">
+            <h3>年化收益率</h3>
+            <div class="value negative">-2.72%</div>
+        </div>
+        <div class="card">
+            <h3>最大回撤</h3>
+            <div class="value negative">-34.46%</div>
+        </div>
+        <div class="card">
+            <h3>夏普比率</h3>
+            <div class="value">-0.47</div>
+        </div>
+        <div class="card">
+            <h3>胜率</h3>
+            <div class="value">34.7%</div>
+        </div>
+        <div class="card">
+            <h3>盈亏比</h3>
+            <div class="value">0.79</div>
+        </div>
+    </div>
+
+    <div class="section"><h2>权益曲线</h2></div>
+    <img src="advanced_swing_optimized_equity.png" alt="Equity Curve">
+
+    <div class="section"><h2>交易分析</h2></div>
+    <img src="advanced_swing_optimized_trades.png" alt="Trade Analysis">
+
+    <div class="section"><h2>交易明细 (最近20笔)</h2></div>
+    <table>
+        <thead><tr><th>#</th><th>买入日</th><th>买入价</th><th>卖出日</th><th>卖出价</th><th>持仓天</th><th>盈亏</th><th>原因</th></tr></thead>
+        <tbody>
+        <tr>
+            <td>1</td>
+            <td>2020-06-01</td>
+            <td>11.85</td>
+            <td>2020-06-03</td>
+            <td>11.96</td>
+            <td>2</td>
+            <td style="color:#4caf50">+0.90%</td>
+            <td>止损(11.97)</td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td>2020-08-03</td>
+            <td>12.19</td>
+            <td>2020-08-06</td>
+            <td>11.65</td>
+            <td>3</td>
+            <td style="color:#f44336">-4.41%</td>
+            <td>止损(11.67)</td>
+        </tr>
+        <tr>
+            <td>3</td>
+            <td>2020-08-19</td>
+            <td>12.39</td>
+            <td>2020-08-26</td>
+            <td>12.20</td>
+            <td>5</td>
+            <td style="color:#f44336">-1.59%</td>
+            <td>止损(12.21)</td>
+        </tr>
+        <tr>
+            <td>4</td>
+            <td>2020-10-14</td>
+            <td>11.26</td>
+            <td>2020-10-20</td>
+            <td>11.13</td>
+            <td>4</td>
+            <td style="color:#f44336">-1.18%</td>
+            <td>策略信号卖出</td>
+        </tr>
+        <tr>
+            <td>5</td>
+            <td>2020-11-06</td>
+            <td>11.55</td>
+            <td>2020-11-17</td>
+            <td>11.87</td>
+            <td>7</td>
+            <td style="color:#4caf50">+2.78%</td>
+            <td>止损(11.88)</td>
+        </tr>
+        <tr>
+            <td>6</td>
+            <td>2021-01-06</td>
+            <td>10.95</td>
+            <td>2021-01-08</td>
+            <td>10.42</td>
+            <td>2</td>
+            <td style="color:#f44336">-4.85%</td>
+            <td>止损(10.63)</td>
+        </tr>
+        <tr>
+            <td>7</td>
+            <td>2021-02-10</td>
+            <td>10.40</td>
+            <td>2021-02-22</td>
+            <td>10.87</td>
+            <td>3</td>
+            <td style="color:#4caf50">+4.52%</td>
+            <td>止损(10.89)</td>
+        </tr>
+        <tr>
+            <td>8</td>
+            <td>2021-02-22</td>
+            <td>10.97</td>
+            <td>2021-02-24</td>
+            <td>10.77</td>
+            <td>2</td>
+            <td style="color:#f44336">-1.83%</td>
+            <td>止损(10.89)</td>
+        </tr>
+        <tr>
+            <td>9</td>
+            <td>2021-04-19</td>
+            <td>11.48</td>
+            <td>2021-04-21</td>
+            <td>10.60</td>
+            <td>2</td>
+            <td style="color:#f44336">-7.68%</td>
+            <td>止损(10.98)</td>
+        </tr>
+        <tr>
+            <td>10</td>
+            <td>2021-06-24</td>
+            <td>12.61</td>
+            <td>2021-06-29</td>
+            <td>12.89</td>
+            <td>3</td>
+            <td style="color:#4caf50">+2.18%</td>
+            <td>止损(12.90)</td>
+        </tr>
+        <tr>
+            <td>11</td>
+            <td>2021-08-27</td>
+            <td>17.56</td>
+            <td>2021-08-31</td>
+            <td>17.29</td>
+            <td>2</td>
+            <td style="color:#f44336">-1.52%</td>
+            <td>止损(17.34)</td>
+        </tr>
+        <tr>
+            <td>12</td>
+            <td>2021-12-14</td>
+            <td>22.05</td>
+            <td>2021-12-16</td>
+            <td>21.01</td>
+            <td>2</td>
+            <td style="color:#f44336">-4.73%</td>
+            <td>止损(21.33)</td>
+        </tr>
+        <tr>
+            <td>13</td>
+            <td>2021-12-22</td>
+            <td>24.88</td>
+            <td>2021-12-24</td>
+            <td>24.44</td>
+            <td>2</td>
+            <td style="color:#f44336">-1.80%</td>
+            <td>止损(24.46)</td>
+        </tr>
+        <tr>
+            <td>14</td>
+            <td>2022-01-14</td>
+            <td>23.77</td>
+            <td>2022-01-19</td>
+            <td>23.21</td>
+            <td>3</td>
+            <td style="color:#f44336">-2.36%</td>
+            <td>止损(23.24)</td>
+        </tr>
+        <tr>
+            <td>15</td>
+            <td>2022-07-19</td>
+            <td>14.53</td>
+            <td>2022-07-21</td>
+            <td>14.77</td>
+            <td>2</td>
+            <td style="color:#4caf50">+1.62%</td>
+            <td>止损(15.10)</td>
+        </tr>
+        <tr>
+            <td>16</td>
+            <td>2022-07-21</td>
+            <td>15.41</td>
+            <td>2022-07-25</td>
+            <td>15.88</td>
+            <td>2</td>
+            <td style="color:#4caf50">+3.07%</td>
+            <td>止损(15.89)</td>
+        </tr>
+        <tr>
+            <td>17</td>
+            <td>2022-10-18</td>
+            <td>14.87</td>
+            <td>2022-10-20</td>
+            <td>14.32</td>
+            <td>2</td>
+            <td style="color:#f44336">-3.72%</td>
+            <td>止损(14.34)</td>
+        </tr>
+        <tr>
+            <td>18</td>
+            <td>2022-11-07</td>
+            <td>14.80</td>
+            <td>2022-11-09</td>
+            <td>14.19</td>
+            <td>2</td>
+            <td style="color:#f44336">-4.15%</td>
+            <td>止损(14.42)</td>
+        </tr>
+        <tr>
+            <td>19</td>
+            <td>2022-12-12</td>
+            <td>13.32</td>
+            <td>2022-12-15</td>
+            <td>12.78</td>
+            <td>3</td>
+            <td style="color:#f44336">-4.05%</td>
+            <td>止损(12.80)</td>
+        </tr>
+        <tr>
+            <td>20</td>
+            <td>2022-12-15</td>
+            <td>13.28</td>
+            <td>2022-12-19</td>
+            <td>12.62</td>
+            <td>2</td>
+            <td style="color:#f44336">-4.99%</td>
+            <td>止损(12.63)</td>
+        </tr></tbody>
+    </table>
+
+    <div class="flex">
+        <div class="flex-item">
+            <div class="section"><h2>年度表现</h2></div>
+            <table>
+                <thead><tr><th>年份</th><th>收益率</th><th>年内回撤</th></tr></thead>
+                <tbody>
+        <tr>
+            <td>2020</td>
+            <td style="color:#f44336">-3.44%</td>
+            <td>-8.20%</td>
+        </tr>
+        <tr>
+            <td>2021</td>
+            <td style="color:#f44336">-12.89%</td>
+            <td>-12.89%</td>
+        </tr>
+        <tr>
+            <td>2022</td>
+            <td style="color:#f44336">-11.87%</td>
+            <td>-16.15%</td>
+        </tr>
+        <tr>
+            <td>2023</td>
+            <td style="color:#f44336">-4.05%</td>
+            <td>-7.50%</td>
+        </tr>
+        <tr>
+            <td>2024</td>
+            <td style="color:#4caf50">+4.34%</td>
+            <td>-11.83%</td>
+        </tr>
+        <tr>
+            <td>2025</td>
+            <td style="color:#4caf50">+14.31%</td>
+            <td>-20.20%</td>
+        </tr></tbody>
+            </table>
+        </div>
+        <div class="flex-item">
+            <div class="section"><h2>月度表现</h2></div>
+            <table style="max-height:400px; overflow-y:auto;">
+                <thead><tr><th>月份</th><th>收益率</th><th>累计净值</th></tr></thead>
+                <tbody>
+        <tr>
+            <td>2020-01</td>
+            <td style="color:#f44336">+0.00%</td>
+            <td>1.000</td>
+        </tr>
+        <tr>
+            <td>2020-02</td>
+            <td style="color:#f44336">+0.00%</td>
+            <td>1.000</td>
+        </tr>
+        <tr>
+            <td>2020-03</td>
+            <td style="color:#f44336">+0.00%</td>
+            <td>1.000</td>
+        </tr>
+        <tr>
+            <td>2020-04</td>
+            <td style="color:#f44336">+0.00%</td>
+            <td>1.000</td>
+        </tr>
+        <tr>
+            <td>2020-05</td>
+            <td style="color:#f44336">+0.00%</td>
+            <td>1.000</td>
+        </tr>
+        <tr>
+            <td>2020-06</td>
+            <td style="color:#4caf50">+0.69%</td>
+            <td>1.007</td>
+        </tr>
+        <tr>
+            <td>2020-07</td>
+            <td style="color:#f44336">+0.00%</td>
+            <td>1.007</td>
+        </tr>
+        <tr>
+            <td>2020-08</td>
+            <td style="color:#f44336">-4.88%</td>
+            <td>0.958</td>
+        </tr>
+        <tr>
+            <td>2020-09</td>
+            <td style="color:#f44336">+0.00%</td>
+            <td>0.958</td>
+        </tr>
+        <tr>
+            <td>2020-10</td>
+            <td style="color:#f44336">-1.05%</td>
+            <td>0.948</td>
+        </tr>
+        <tr>
+            <td>2020-11</td>
+            <td style="color:#4caf50">+2.08%</td>
+            <td>0.968</td>
+        </tr>
+        <tr>
+            <td>2020-12</td>
+            <td style="color:#f44336">+0.00%</td>
+            <td>0.968</td>
+        </tr>
+        <tr>
+            <td>2021-01</td>
+            <td style="color:#f44336">-3.96%</td>
+            <td>0.929</td>
+        </tr>
+        <tr>
+            <td>2021-02</td>
+            <td style="color:#4caf50">+1.86%</td>
+            <td>0.946</td>
+        </tr>
+        <tr>
+            <td>2021-03</td>
+            <td style="color:#f44336">+0.00%</td>
+            <td>0.946</td>
+        </tr>
+        <tr>
+            <td>2021-04</td>
+            <td style="color:#f44336">-6.18%</td>
+            <td>0.888</td>
+        </tr>
+        <tr>
+            <td>2021-05</td>
+            <td style="color:#f44336">+0.00%</td>
+            <td>0.888</td>
+        </tr>
+        <tr>
+            <td>2021-06</td>
+            <td style="color:#4caf50">+1.62%</td>
+            <td>0.902</td>
+        </tr>
+        <tr>
+            <td>2021-07</td>
+            <td style="color:#f44336">+0.00%</td>
+            <td>0.902</td>
+        </tr>
+        <tr>
+            <td>2021-08</td>
+            <td style="color:#f44336">-1.34%</td>
+            <td>0.890</td>
+        </tr>
+        <tr>
+            <td>2021-09</td>
+            <td style="color:#f44336">+0.00%</td>
+            <td>0.890</td>
+        </tr>
+        <tr>
+            <td>2021-10</td>
+            <td style="color:#f44336">+0.00%</td>
+            <td>0.890</td>
+        </tr>
+        <tr>
+            <td>2021-11</td>
+            <td style="color:#f44336">+0.00%</td>
+            <td>0.890</td>
+        </tr>
+        <tr>
+            <td>2021-12</td>
+            <td style="color:#f44336">-5.34%</td>
+            <td>0.843</td>
+        </tr>
+        <tr>
+            <td>2022-01</td>
+            <td style="color:#f44336">-1.98%</td>
+            <td>0.826</td>
+        </tr>
+        <tr>
+            <td>2022-02</td>
+            <td style="color:#f44336">+0.00%</td>
+            <td>0.826</td>
+        </tr>
+        <tr>
+            <td>2022-03</td>
+            <td style="color:#f44336">+0.00%</td>
+            <td>0.826</td>
+        </tr>
+        <tr>
+            <td>2022-04</td>
+            <td style="color:#f44336">+0.00%</td>
+            <td>0.826</td>
+        </tr>
+        <tr>
+            <td>2022-05</td>
+            <td style="color:#f44336">+0.00%</td>
+            <td>0.826</td>
+        </tr>
+        <tr>
+            <td>2022-06</td>
+            <td style="color:#f44336">+0.00%</td>
+            <td>0.826</td>
+        </tr>
+        <tr>
+            <td>2022-07</td>
+            <td style="color:#4caf50">+3.50%</td>
+            <td>0.855</td>
+        </tr>
+        <tr>
+            <td>2022-08</td>
+            <td style="color:#f44336">+0.00%</td>
+            <td>0.855</td>
+        </tr>
+        <tr>
+            <td>2022-09</td>
+            <td style="color:#f44336">+0.00%</td>
+            <td>0.855</td>
+        </tr>
+        <tr>
+            <td>2022-10</td>
+            <td style="color:#f44336">-3.03%</td>
+            <td>0.829</td>
+        </tr>
+        <tr>
+            <td>2022-11</td>
+            <td style="color:#f44336">-3.38%</td>
+            <td>0.801</td>
+        </tr>
+        <tr>
+            <td>2022-12</td>
+            <td style="color:#f44336">-7.28%</td>
+            <td>0.743</td>
+        </tr>
+        <tr>
+            <td>2023-01</td>
+            <td style="color:#4caf50">+2.98%</td>
+            <td>0.765</td>
+        </tr>
+        <tr>
+            <td>2023-02</td>
+            <td style="color:#f44336">+0.00%</td>
+            <td>0.765</td>
+        </tr>
+        <tr>
+            <td>2023-03</td>
+            <td style="color:#f44336">-6.74%</td>
+            <td>0.713</td>
+        </tr>
+        <tr>
+            <td>2023-04</td>
+            <td style="color:#f44336">+0.00%</td>
+            <td>0.713</td>
+        </tr>
+        <tr>
+            <td>2023-05</td>
+            <td style="color:#f44336">+0.00%</td>
+            <td>0.713</td>
+        </tr>
+        <tr>
+            <td>2023-06</td>
+            <td style="color:#f44336">+0.00%</td>
+            <td>0.713</td>
+        </tr>
+        <tr>
+            <td>2023-07</td>
+            <td style="color:#4caf50">+5.68%</td>
+            <td>0.754</td>
+        </tr>
+        <tr>
+            <td>2023-08</td>
+            <td style="color:#f44336">-2.09%</td>
+            <td>0.738</td>
+        </tr>
+        <tr>
+            <td>2023-09</td>
+            <td style="color:#4caf50">+1.23%</td>
+            <td>0.747</td>
+        </tr>
+        <tr>
+            <td>2023-10</td>
+            <td style="color:#f44336">-0.85%</td>
+            <td>0.741</td>
+        </tr>
+        <tr>
+            <td>2023-11</td>
+            <td style="color:#f44336">-1.39%</td>
+            <td>0.731</td>
+        </tr>
+        <tr>
+            <td>2023-12</td>
+            <td style="color:#f44336">+0.00%</td>
+            <td>0.731</td>
+        </tr>
+        <tr>
+            <td>2024-01</td>
+            <td style="color:#f44336">+0.00%</td>
+            <td>0.731</td>
+        </tr>
+        <tr>
+            <td>2024-02</td>
+            <td style="color:#f44336">+0.00%</td>
+            <td>0.731</td>
+        </tr>
+        <tr>
+            <td>2024-03</td>
+            <td style="color:#f44336">+0.00%</td>
+            <td>0.731</td>
+        </tr>
+        <tr>
+            <td>2024-04</td>
+            <td style="color:#f44336">-2.40%</td>
+            <td>0.713</td>
+        </tr>
+        <tr>
+            <td>2024-05</td>
+            <td style="color:#f44336">-2.62%</td>
+            <td>0.694</td>
+        </tr>
+        <tr>
+            <td>2024-06</td>
+            <td style="color:#4caf50">+4.13%</td>
+            <td>0.723</td>
+        </tr>
+        <tr>
+            <td>2024-07</td>
+            <td style="color:#f44336">-3.39%</td>
+            <td>0.699</td>
+        </tr>
+        <tr>
+            <td>2024-08</td>
+            <td style="color:#f44336">-3.49%</td>
+            <td>0.674</td>
+        </tr>
+        <tr>
+            <td>2024-09</td>
+            <td style="color:#4caf50">+6.24%</td>
+            <td>0.716</td>
+        </tr>
+        <tr>
+            <td>2024-10</td>
+            <td style="color:#f44336">+0.00%</td>
+            <td>0.716</td>
+        </tr>
+        <tr>
+            <td>2024-11</td>
+            <td style="color:#f44336">+0.00%</td>
+            <td>0.716</td>
+        </tr>
+        <tr>
+            <td>2024-12</td>
+            <td style="color:#f44336">-0.72%</td>
+            <td>0.711</td>
+        </tr>
+        <tr>
+            <td>2025-01</td>
+            <td style="color:#f44336">-2.99%</td>
+            <td>0.690</td>
+        </tr>
+        <tr>
+            <td>2025-02</td>
+            <td style="color:#4caf50">+16.62%</td>
+            <td>0.804</td>
+        </tr>
+        <tr>
+            <td>2025-03</td>
+            <td style="color:#f44336">+0.00%</td>
+            <td>0.804</td>
+        </tr>
+        <tr>
+            <td>2025-04</td>
+            <td style="color:#4caf50">+2.95%</td>
+            <td>0.828</td>
+        </tr>
+        <tr>
+            <td>2025-05</td>
+            <td style="color:#f44336">-3.29%</td>
+            <td>0.801</td>
+        </tr>
+        <tr>
+            <td>2025-06</td>
+            <td style="color:#4caf50">+2.42%</td>
+            <td>0.820</td>
+        </tr>
+        <tr>
+            <td>2025-07</td>
+            <td style="color:#f44336">-2.54%</td>
+            <td>0.799</td>
+        </tr>
+        <tr>
+            <td>2025-08</td>
+            <td style="color:#4caf50">+4.68%</td>
+            <td>0.837</td>
+        </tr>
+        <tr>
+            <td>2025-09</td>
+            <td style="color:#f44336">-2.98%</td>
+            <td>0.812</td>
+        </tr>
+        <tr>
+            <td>2025-10</td>
+            <td style="color:#f44336">+0.00%</td>
+            <td>0.812</td>
+        </tr>
+        <tr>
+            <td>2025-11</td>
+            <td style="color:#f44336">-0.61%</td>
+            <td>0.807</td>
+        </tr>
+        <tr>
+            <td>2025-12</td>
+            <td style="color:#f44336">+0.00%</td>
+            <td>0.807</td>
+        </tr></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="footer">
+        本报告由回测引擎自动生成 | 仅供参考，不构成投资建议 | 回测收益不代表未来表现
+    </div>
+</div>
+</body>
+</html>

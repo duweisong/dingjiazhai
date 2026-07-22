@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>红书爆款助手 - AI写小红书文案, 10秒出稿</title>
+<style>
+  :root {
+    --red: #fe2c55; --red-dark: #c9203f;
+    --bg: #fff5f7; --card: #fff; --text: #333; --sub: #999;
+    --border: #ffe0e6; --shadow: 0 2px 20px rgba(254,44,85,0.08);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.8; min-height: 100vh;
+  }
+
+  /* Header */
+  header {
+    background: linear-gradient(135deg, #ff6b81, #fe2c55);
+    color: #fff; text-align: center; padding: 50px 20px 40px;
+  }
+  header h1 { font-size: 2.2em; margin-bottom: 8px; }
+  header p { opacity: 0.9; font-size: 1.1em; }
+  header .stats { display: flex; justify-content: center; gap: 30px; margin-top: 20px; flex-wrap: wrap; }
+  header .stat { background: rgba(255,255,255,0.2); padding: 10px 20px; border-radius: 12px; }
+  header .stat .num { font-size: 1.5em; font-weight: bold; }
+  header .stat .label { font-size: 0.8em; opacity: 0.8; }
+
+  /* Main */
+  .container { max-width: 900px; margin: 0 auto; padding: 30px 20px; }
+
+  /* Input card */
+  .card {
+    background: var(--card); border-radius: 16px; padding: 30px;
+    box-shadow: var(--shadow); margin-bottom: 25px;
+  }
+  .card h3 { font-size: 1.3em; margin-bottom: 20px; color: var(--red); }
+  .form-row { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
+  .form-group { flex: 1; min-width: 200px; }
+  .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9em; color: #666; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 12px 15px; border: 2px solid var(--border);
+    border-radius: 10px; font-size: 1em; transition: border-color 0.3s;
+    font-family: inherit;
+  }
+  .form-group textarea { resize: vertical; min-height: 80px; }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    outline: none; border-color: var(--red);
+  }
+  .tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .tag {
+    padding: 6px 14px; border-radius: 20px; border: 2px solid var(--border);
+    cursor: pointer; font-size: 0.85em; transition: all 0.2s; background: #fff;
+  }
+  .tag:hover { border-color: var(--red); }
+  .tag.active { background: var(--red); color: #fff; border-color: var(--red); }
+
+  .btn {
+    display: inline-block; padding: 14px 45px; border-radius: 30px;
+    font-size: 1.1em; font-weight: bold; border: none; cursor: pointer;
+    transition: all 0.3s; width: 100%;
+  }
+  .btn-primary { background: var(--red); color: #fff; }
+  .btn-primary:hover { background: var(--red-dark); transform: translateY(-2px); box-shadow: 0 4px 20px rgba(254,44,85,0.3); }
+  .btn-primary:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+
+  /* Result card */
+  .result { display: none; }
+  .result.show { display: block; }
+  .result-item { margin-bottom: 20px; }
+  .result-item .label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .result-item .label-row strong { font-size: 1em; color: var(--red); }
+  .copy-btn {
+    padding: 5px 16px; border-radius: 15px; border: 1px solid #ddd;
+    background: #fff; cursor: pointer; font-size: 0.8em; color: #666;
+    transition: all 0.2s;
+  }
+  .copy-btn:hover { border-color: var(--red); color: var(--red); }
+  .copy-btn.copied { background: #4caf50; color: #fff; border-color: #4caf50; }
+  .result-content {
+    background: #fafafa; padding: 18px 20px; border-radius: 10px;
+    white-space: pre-wrap; line-height: 2; font-size: 0.95em;
+    border: 1px solid #eee;
+  }
+
+  /* How it works */
+  .steps { display: flex; gap: 20px; flex-wrap: wrap; }
+  .step { flex: 1; text-align: center; min-width: 150px; padding: 20px; }
+  .step .emoji { font-size: 2.5em; margin-bottom: 10px; }
+  .step h4 { margin-bottom: 5px; }
+
+  /* Pricing mini */
+  .pricing-row { display: flex; gap: 20px; flex-wrap: wrap; }
+  .price-card {
+    flex: 1; min-width: 200px; text-align: center; padding: 25px;
+    border-radius: 12px; border: 2px solid var(--border); transition: all 0.3s;
+  }
+  .price-card:hover { border-color: var(--red); transform: translateY(-3px); }
+  .price-card.hot { border-color: var(--red); background: #fff5f7; position: relative; }
+  .price-card.hot::before { content: '推荐'; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--red); color: #fff; padding: 3px 16px; border-radius: 12px; font-size: 0.8em; }
+  .price-card .tier { font-size: 1.1em; font-weight: 600; }
+  .price-card .amount { font-size: 2.5em; color: var(--red); font-weight: bold; }
+  .price-card .amount small { font-size: 0.4em; color: #999; }
+  .price-card ul { list-style: none; margin: 15px 0; text-align: left; font-size: 0.9em; }
+  .price-card ul li { padding: 5px 0; }
+  .price-card ul li::before { content: 'Y '; color: var(--red); font-size: 0.7em; }
+
+  /* Toast */
+  .toast {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    background: #333; color: #fff; padding: 12px 30px; border-radius: 30px;
+    z-index: 1000; display: none; font-weight: bold; font-size: 0.9em;
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    header h1 { font-size: 1.5em; }
+  }
+
+  .loading-spinner {
+    display: inline-block; width: 20px; height: 20px; border: 2px solid #fff;
+    border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite;
+    vertical-align: middle; margin-right: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<header>
+  <h1>📕 红书爆款助手</h1>
+  <p>输入你的产品/话题, AI 10秒生成小红书爆款文案</p>
+  <div class="stats">
+    <div class="stat"><div class="num">5种</div><div class="label">文案风格</div></div>
+    <div class="stat"><div class="num">10秒</div><div class="label">出稿速度</div></div>
+    <div class="stat"><div class="num">免费</div><div class="label">每日3次</div></div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Input Form -->
+  <div class="card">
+    <h3>✍️ 写什么</h3>
+    <div class="form-row">
+      <div class="form-group">
+        <label>产品/话题</label>
+        <input type="text" id="topic" placeholder="例如: 素颜霜、考研复习、周末探店..." onkeydown="if(event.key==='Enter')generate()">
+      </div>
+      <div class="form-group">
+        <label>文案风格</label>
+        <select id="style">
+          <option value="recommend">🛍️ 种草推荐</option>
+          <option value="review">📊 真实测评</option>
+          <option value="tutorial">📖 教程攻略</option>
+          <option value="daily">🌈 日常分享</option>
+          <option value="compare">⚖️ 对比评测</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:15px;">
+      <label>关键卖点 (选填, 逗号分隔)</label>
+      <textarea id="keywords" placeholder="例如: 不卡粉, 持妆12小时, 油皮亲妈, 性价比高"></textarea>
+    </div>
+    <div class="form-group" style="margin-bottom:15px;">
+      <label style="margin-bottom:8px;">文案调性 (可多选)</label>
+      <div class="tags" id="tone-tags">
+        <span class="tag" data-tone="真诚分享">真诚分享</span>
+        <span class="tag active" data-tone="干货满满">干货满满</span>
+        <span class="tag" data-tone="幽默搞笑">幽默搞笑</span>
+        <span class="tag" data-tone="真实体验">真实体验</span>
+        <span class="tag" data-tone="专业硬核">专业硬核</span>
+        <span class="tag" data-tone="闺蜜安利">闺蜜安利</span>
+      </div>
+    </div>
+    <button class="btn btn-primary" id="gen-btn" onclick="generate()">
+      🚀 一键生成爆款文案
+    </button>
+    <p style="text-align:center;margin-top:10px;color:#999;font-size:0.8em;">免费用户每天3次 · Pro用户无限次 · 生成内容请自行审核</p>
+  </div>
+
+  <!-- Result -->
+  <div class="card result" id="result-card">
+    <h3>✨ 生成结果</h3>
+    <div id="result-area"></div>
+    <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="generate()" style="flex:1;">🔄 再生成一版</button>
+      <button class="btn" style="flex:1;background:#fff;border:2px solid var(--red);color:var(--red);" onclick="copyAll()">📋 一键复制全部</button>
+    </div>
+  </div>
+
+  <!-- How It Works -->
+  <div class="card">
+    <h3>🔧 怎么做到的</h3>
+    <div class="steps">
+      <div class="step"><div class="emoji">🧠</div><h4>AI分析</h4><p>理解你的产品和卖点</p></div>
+      <div class="step"><div class="emoji">🎯</div><h4>爆款公式</h4><p>套用小红书高赞文案结构</p></div>
+      <div class="step"><div class="emoji">📝</div><h4>一键生成</h4><p>标题+正文+话题标签</p></div>
+      <div class="step"><div class="emoji">📋</div><h4>复制发布</h4><p>粘贴到小红书直接用</p></div>
+    </div>
+  </div>
+
+  <!-- Pricing -->
+  <div class="card">
+    <h3>💰 定价</h3>
+    <div class="pricing-row">
+      <div class="price-card">
+        <div class="tier">免费版</div>
+        <div class="amount">Y0<small>/月</small></div>
+        <ul>
+          <li>每天3次生成</li>
+          <li>5种文案风格</li>
+          <li>复制到剪贴板</li>
+        </ul>
+        <button class="btn" style="background:#fff;border:2px solid #ddd;color:#666;width:100%;">当前</button>
+      </div>
+      <div class="price-card hot">
+        <div class="tier">Pro 版</div>
+        <div class="amount">Y29<small>/月</small></div>
+        <ul>
+          <li>无限次生成</li>
+          <li>全部风格+调性</li>
+          <li>历史记录保存</li>
+          <li>多平台适配(抖音/微博)</li>
+          <li>优先体验新功能</li>
+        </ul>
+        <button class="btn btn-primary" style="width:100%;">立即升级 Y29/月</button>
+      </div>
+      <div class="price-card">
+        <div class="tier">团队版</div>
+        <div class="amount">Y99<small>/月</small></div>
+        <ul>
+          <li>Pro全部功能</li>
+          <li>5个子账号</li>
+          <li>品牌调性定制</li>
+          <li>批量生成(100篇/次)</li>
+          <li>专属客服</li>
+        </ul>
+        <button class="btn" style="background:#fff;border:2px solid var(--red);color:var(--red);width:100%;">联系客服</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Also check -->
+  <div class="card">
+    <h3>🎯 更多赚钱工具</h3>
+    <p style="margin-bottom:15px;">按同样的方法论, 我们还做了这些:</p>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
+      <a href="/" style="text-decoration:none;padding:12px 16px;background:#fff5f7;border-radius:8px;color:var(--text);border:1px solid var(--border);">📊 掘金日报 Pro - A股量化信号</a>
+      <a href="#" style="text-decoration:none;padding:12px 16px;background:#f5f0ff;border-radius:8px;color:var(--text);border:1px solid #e0d5ff;">📄 简历优化助手 - AI改简历</a>
+      <a href="#" style="text-decoration:none;padding:12px 16px;background:#f0f8ff;border-radius:8px;color:var(--text);border:1px solid #d5e5ff;">🛒 差评雷达 - 电商竞品监控</a>
+      <a href="#" style="text-decoration:none;padding:12px 16px;background:#fff8f0;border-radius:8px;color:var(--text);border:1px solid #ffe5d5;">🎓 考研通 - AI每日一题</a>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ===== Tone Tag Toggle =====
+document.querySelectorAll('#tone-tags .tag').forEach(tag => {
+  tag.addEventListener('click', function() {
+    this.classList.toggle('active');
+  });
+});
+
+// ===== Generate =====
+async function generate() {
+  const topic = document.getElementById('topic').value.trim();
+  if (!topic) { showToast('请输入产品/话题'); return; }
+
+  const btn = document.getElementById('gen-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading-spinner"></span>AI正在创作中...';
+
+  const style = document.getElementById('style').value;
+  const keywords = document.getElementById('keywords').value.trim();
+  const tones = Array.from(document.querySelectorAll('#tone-tags .tag.active'))
+    .map(t => t.dataset.tone);
+
+  // Build prompt
+  const styleNames = {
+    recommend: '种草推荐文', review: '真实测评文',
+    tutorial: '教程攻略文', daily: '日常分享文', compare: '对比评测文'
+  };
+
+  const prompt = `你是一个小红书爆款文案专家。请为以下内容生成一篇小红书文案：
+
+【产品/话题】${topic}
+【文案类型】${styleNames[style]}
+【关键卖点】${keywords || '无'}
+【文案调性】${tones.join('、')}
+
+要求：
+1. 标题: 用emoji开头, 制造好奇心或痛点, 15字以内, 有爆款感
+2. 正文: 用第一人称真实分享的口吻, 2-3段, 每段2-3句, 重点是"这个产品/方法真的有用"
+3. 话题标签: 生成5-8个精准标签, 带#号
+4. 禁用"家人们""绝绝子""yyds"等油腻词汇
+5. 语言自然亲切, 像朋友聊天, 不做作
+
+请按以下格式输出：
+【标题】
+xxx
+【正文】
+xxx
+【标签】
+#xxx #xxx`;
+
+  try {
+    const res = await fetch('/api/redbook/generate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ prompt, topic, style, tones })
+    });
+    const data = await res.json();
+
+    if (data.ok) {
+      renderResult(data.content || data.fallback);
+    } else {
+      // Fallback: 生成模板文案
+      const fallback = generateFallback(topic, style, keywords, tones);
+      renderResult(fallback);
+    }
+  } catch(e) {
+    // 演示模式: 本地生成
+    const fallback = generateFallback(topic, style, keywords, tones);
+    renderResult(fallback);
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '🚀 一键生成爆款文案';
+}
+
+function renderResult(content) {
+  // Parse sections
+  const titleMatch = content.match(/【标题】\s*\n?(.+?)(?=【正文】|【标签】|$)/s);
+  const bodyMatch = content.match(/【正文】\s*\n?(.+?)(?=【标签】|$)/s);
+  const tagsMatch = content.match(/【标签】\s*\n?(.+?)$/s);
+
+  const title = titleMatch ? titleMatch[1].trim() : '';
+  const body = bodyMatch ? bodyMatch[1].trim() : '';
+  const tags = tagsMatch ? tagsMatch[1].trim() : '';
+
+  document.getElementById('result-area').innerHTML = `
+    <div class="result-item">
+      <div class="label-row"><strong>📌 标题</strong><button class="copy-btn" onclick="copyText(this, '${escapeHtml(title)}')">复制</button></div>
+      <div class="result-content">${escapeHtml(title)}</div>
+    </div>
+    <div class="result-item">
+      <div class="label-row"><strong>📝 正文</strong><button class="copy-btn" onclick="copyText(this, '${escapeHtml(body)}')">复制</button></div>
+      <div class="result-content">${escapeHtml(body)}</div>
+    </div>
+    <div class="result-item">
+      <div class="label-row"><strong>🏷️ 话题标签</strong><button class="copy-btn" onclick="copyText(this, '${escapeHtml(tags)}')">复制</button></div>
+      <div class="result-content">${escapeHtml(tags)}</div>
+    </div>
+  `;
+  document.getElementById('result-card').classList.add('show');
+  document.getElementById('result-card').scrollIntoView({behavior:'smooth'});
+}
+
+function generateFallback(topic, style, keywords, tones) {
+  const styles = {
+    recommend: { title: ['绝了','无限回购','被问800遍','挖到宝了','不买后悔'], body: '姐妹们！我最近发现了{0}，真的太太太好用了！\n\n用了{1}之后，{2}效果绝了，连我闺蜜都问我在哪买的。\n\n关键是性价比还超高，对比之前用过的{3}，简直不是一个级别。真心分享给需要的姐妹！' },
+    review: { title: ['实测30天','深度测评','踩坑总结','真实反馈','值不值得买'], body: '作为一个用过{4}的人，今天来认真说说{0}到底怎么样。\n\n先说优点：{2}确实明显，{1}之后能明显感受到变化。\n\n再说槽点：{3}表现一般，如果你在意这点，建议三思。总的来说，{4}值得一试。' },
+    tutorial: { title: ['保姆级教程','一学就会','新手必看','手把手教你','超详细攻略'], body: '很多姐妹问我{0}怎么搞，今天出一期超详细教程！\n\n第一步：准备好{1}。第二步：{2}是关键。\n\n第三步：{3}决定了最终效果。按照这个流程走，{4}绝对没问题！收藏起来慢慢看~' },
+    daily: { title: ['今天也是','记录一下','分享日常','随手拍','生活碎片'], body: '今天的{0}日常来啦~\n\n{1}之后的感觉就是{2}，整个人状态都不一样了。\n\n最近越来越觉得{3}真的很重要，{4}就是我坚持的动力。你们呢？' },
+    compare: { title: ['A vs B','到底选哪个','别再纠结了','终极对比','看完就懂'], body: '{0}选A还是B？纠结了一个月的我告诉你答案。\n\n从{1}来看，A的{2}确实更强。但从{3}角度分析，B才是性价比之王。\n\n结论：如果你更在意{2}就选A，如果{3}是你的核心需求，那{4}更推荐。' }
+  };
+
+  const s = styles[style] || styles.recommend;
+  const words = [topic, keywords.split(',')[0]||'使用', keywords.split(',')[1]||'效果', keywords.split(',')[2]||'其他产品', '这个/这款/这个方法'];
+  const title = s.title[Math.floor(Math.random()*s.title.length)] + '｜' + topic;
+  const body = s.body.replace(/\{(\d)\}/g, (m, i) => words[parseInt(i)]);
+
+  const hashtags = topic.split(/[,，\s]+/).filter(Boolean).map(t => '#'+t).join(' ') + ' #好物分享 #真实体验 #' + tones[0];
+
+  return `【标题】\n${title}\n【正文】\n${body}\n【标签】\n${hashtags}`;
+}
+
+function copyText(btn, text) {
+  const decoded = text.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"');
+  navigator.clipboard.writeText(decoded).then(() => {
+    btn.textContent = '已复制!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '复制'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+function copyAll() {
+  const contents = document.querySelectorAll('.result-content');
+  let all = '';
+  contents.forEach(c => { all += c.textContent + '\n\n'; });
+  navigator.clipboard.writeText(all.trim()).then(() => showToast('全部内容已复制!'));
+}
+
+function escapeHtml(text) {
+  return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 2500);
+}
+</script>
+
+</body>
+</html>

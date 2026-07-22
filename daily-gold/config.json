@@ -1,0 +1,75 @@
+{
+  "app": {
+    "name": "掘金日报 Pro",
+    "slogan": "每天一条信号，跑赢90%散户",
+    "version": "1.0.0",
+    "port": 3456,
+    "host": "localhost"
+  },
+  "pricing": {
+    "free": {
+      "name": "免费版",
+      "price": 0,
+      "features": [
+        "每日Top10信号",
+        "市场概况"
+      ]
+    },
+    "pro": {
+      "name": "Pro版",
+      "price": 29,
+      "price_yearly": 290,
+      "features": [
+        "完整Top30信号",
+        "买卖点提示",
+        "风险监控",
+        "邮件推送"
+      ]
+    },
+    "vip": {
+      "name": "VIP版",
+      "price": 99,
+      "price_yearly": 990,
+      "features": [
+        "AI增强分析",
+        "微信实时推送",
+        "一对一咨询",
+        "历史回测数据",
+        "Pro全部功能"
+      ]
+    }
+  },
+  "signal": {
+    "script_path": "C:/AI/daily_signal.py",
+    "python_cmd": "python",
+    "daily_run_time": "17:00",
+    "stocks_cache_dir": "C:/AI/.strategy_cache",
+    "reports_dir": "C:/AI/daily_reports"
+  },
+  "ai": {
+    "enabled": true,
+    "model": "claude-sonnet-4-20250514",
+    "max_tokens": 2000
+  },
+  "notify": {
+    "email": {
+      "enabled": false,
+      "smtp_host": "",
+      "smtp_port": 587,
+      "user": "",
+      "pass": ""
+    },
+    "wechat": {
+      "enabled": false,
+      "webhook_url": ""
+    }
+  },
+  "subscriber_file": "C:/AI/daily-gold/data/subscribers.json",
+  "payment_file": "C:/AI/daily-gold/data/payments.json",
+  "costs": {
+    "hosting": 0,
+    "ai_api": 5,
+    "email": 0,
+    "total": 5
+  }
+}

@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.strategy_cache/
+*.png
+*.csv
+!results/*.csv

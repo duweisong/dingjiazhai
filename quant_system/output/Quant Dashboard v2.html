@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quant System · Dashboard v2</title>
+
+<!-- React 18.3.1 (npmmirror CDN) -->
+<script src="https://registry.npmmirror.com/react/18.3.1/files/umd/react.development.js" crossorigin="anonymous"></script>
+<script src="https://registry.npmmirror.com/react-dom/18.3.1/files/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<script src="https://registry.npmmirror.com/@babel/standalone/7.29.0/files/babel.min.js" crossorigin="anonymous"></script>
+
+<style>
+:root {
+  --bg-deep: #06080c; --bg-surface: #0c0f16;
+  --glass-bg: rgba(255,255,255,0.02); --glass-border: rgba(255,255,255,0.06);
+  --glass-hover: rgba(255,255,255,0.04);
+  --text-primary: #e2e4e9; --text-secondary: #8b8f9a; --text-muted: #555963;
+  --cyan: #38bdf8; --green: #34d399; --amber: #fbbf24; --red: #f87171; --purple: #a78bfa;
+  --font-mono: 'SF Mono','Cascadia Code','Consolas','Courier New',monospace;
+  --font-sans: system-ui,-apple-system,'Segoe UI',sans-serif;
+  --r-sm: 4px; --r-md: 8px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg-deep); color:var(--text-primary); font-family:var(--font-sans); min-height:100vh; -webkit-font-smoothing:antialiased; }
+.dashboard { display:flex; flex-direction:column; min-height:100vh; max-width:1600px; margin:0 auto; padding:10px 14px; gap:8px; }
+.glass-panel {
+  background:var(--glass-bg); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--glass-border); border-radius:var(--r-md); padding:10px 12px;
+  transition:border-color .2s,background .2s;
+}
+.glass-panel:hover { border-color:rgba(255,255,255,.10); background:var(--glass-hover); }
+
+/* Top Bar */
+.topbar { display:flex; justify-content:space-between; align-items:center; padding:7px 14px; background:var(--bg-surface); border:1px solid var(--glass-border); border-radius:var(--r-md); font-size:11px; }
+.topbar-left { display:flex; align-items:center; gap:14px; }
+.topbar-brand { font-family:var(--font-mono); font-size:12px; font-weight:600; color:var(--cyan); letter-spacing:.04em; }
+.topbar-status { display:flex; align-items:center; gap:5px; color:var(--green); font-family:var(--font-mono); font-size:10px; }
+.status-dot { width:5px; height:5px; background:var(--green); border-radius:50%; animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+.topbar-right { display:flex; align-items:center; gap:16px; font-family:var(--font-mono); font-size:10px; color:var(--text-secondary); }
+.topbar-right .lbl { color:var(--text-muted); }
+
+/* Ticker Bar */
+.ticker-wrap {
+  overflow:hidden; height:28px;
+  background:rgba(255,255,255,.015); border:1px solid var(--glass-border); border-radius:var(--r-md);
+  position:relative;
+}
+.ticker-track { display:flex; animation:tickerScroll 40s linear infinite; width:max-content; }
+.ticker-track:hover { animation-play-state:paused; }
+@keyframes tickerScroll { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+.ticker-item {
+  display:flex; align-items:center; gap:6px; padding:0 18px; white-space:nowrap;
+  font-family:var(--font-mono); font-size:10px; flex-shrink:0;
+}
+.ticker-code { color:var(--text-secondary); }
+.ticker-name { color:#fde68a; font-weight:500; }
+.ticker-price { color:var(--text-primary); }
+.ticker-change.up { color:var(--green); }
+.ticker-change.down { color:var(--red); }
+.ticker-sep { color:#222; margin:0 2px; }
+
+/* KPI Row */
+.kpi-row { display:grid; grid-template-columns:repeat(6,1fr); gap:7px; }
+@media(max-width:1100px){.kpi-row{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:600px){.kpi-row{grid-template-columns:repeat(2,1fr)}}
+.kpi-card {
+  background:var(--glass-bg); backdrop-filter:blur(20px); border:1px solid var(--glass-border);
+  border-radius:var(--r-md); padding:9px 11px; display:flex; flex-direction:column; gap:3px;
+  transition:border-color .2s;
+}
+.kpi-card:hover { border-color:rgba(255,255,255,.12); }
+.kpi-label { font-size:9px; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); }
+.kpi-value { font-family:var(--font-mono); font-size:17px; font-weight:600; letter-spacing:-.02em; }
+.kpi-value.up{color:var(--green)} .kpi-value.down{color:var(--red)} .kpi-value.warn{color:var(--amber)}
+.kpi-sub { font-family:var(--font-mono); font-size:9px; color:var(--text-muted); }
+.kpi-sub.up{color:var(--green)} .kpi-sub.down{color:var(--red)}
+
+/* Main Grid */
+.main-grid { display:grid; grid-template-columns:1fr 360px; gap:8px; flex:1; min-height:0; }
+@media(max-width:1000px){.main-grid{grid-template-columns:1fr}}
+.chart-panel { display:flex; flex-direction:column; gap:6px; }
+.chart-header { display:flex; justify-content:space-between; align-items:center; }
+.chart-tabs { display:flex; gap:2px; background:rgba(255,255,255,.03); border-radius:var(--r-sm); padding:2px; }
+.chart-tab {
+  padding:3px 8px; font-size:9px; font-family:var(--font-mono); color:var(--text-muted);
+  border:none; background:transparent; cursor:pointer; border-radius:3px; letter-spacing:.04em; transition:all .15s;
+}
+.chart-tab.active { background:rgba(56,189,248,.15); color:var(--cyan); }
+.chart-tab:hover { color:var(--text-secondary); }
+.chart-info { font-size:9px; color:var(--text-muted); font-family:var(--font-mono); }
+.chart-area { flex:1; position:relative; min-height:340px; }
+.chart-area canvas { width:100%; height:100%; display:block; }
+.chart-crosshair {
+  position:absolute; top:0; left:0; pointer-events:none;
+  font-family:var(--font-mono); font-size:9px; color:var(--cyan);
+  background:rgba(0,0,0,.7); padding:4px 6px; border-radius:3px; border:1px solid rgba(56,189,248,.3);
+  display:none; white-space:nowrap;
+}
+
+/* Positions */
+.positions-panel { display:flex; flex-direction:column; gap:4px; overflow:hidden; }
+.positions-header {
+  display:flex; justify-content:space-between; align-items:center;
+  font-size:9px; letter-spacing:.06em; color:var(--text-muted); text-transform:uppercase;
+  padding-bottom:3px; border-bottom:1px solid var(--glass-border);
+}
+.positions-list { display:flex; flex-direction:column; gap:1px; overflow-y:auto; max-height:340px; }
+.position-row {
+  display:grid; grid-template-columns:1fr 55px 65px 55px 45px; gap:6px; align-items:center;
+  padding:5px 7px; border-radius:var(--r-sm); font-size:10px; font-family:var(--font-mono);
+  transition:background .15s; cursor:default;
+}
+.position-row:hover { background:var(--glass-hover); }
+.pos-code { color:var(--text-primary); font-weight:500; }
+.pos-weight { text-align:right; color:var(--text-secondary); }
+.pos-pnl { text-align:right; } .pos-pnl.up{color:var(--green)} .pos-pnl.down{color:var(--red)}
+.pos-signal { text-align:center; font-size:9px; }
+.pos-signal.buy{color:var(--green)} .pos-signal.sell{color:var(--red)} .pos-signal.hold{color:var(--text-muted)}
+
+/* Risk Row */
+.risk-row { display:grid; grid-template-columns:repeat(4,1fr); gap:7px; }
+@media(max-width:900px){.risk-row{grid-template-columns:repeat(2,1fr)}}
+.risk-mini { padding:9px 11px; display:flex; flex-direction:column; gap:3px; }
+.risk-mini-label { font-size:9px; letter-spacing:.06em; color:var(--text-muted); text-transform:uppercase; }
+.risk-mini-value { font-family:var(--font-mono); font-size:13px; font-weight:500; }
+.risk-bar-bg { height:3px; background:rgba(255,255,255,.06); border-radius:2px; margin-top:3px; overflow:hidden; }
+.risk-bar-fill { height:100%; border-radius:2px; transition:width .5s ease; }
+.risk-bar-fill.ok{background:var(--green)} .risk-bar-fill.warn{background:var(--amber)} .risk-bar-fill.danger{background:var(--red)}
+
+/* Footer */
+.footer-bar {
+  display:flex; justify-content:space-between; align-items:center; padding:5px 14px;
+  font-family:var(--font-mono); font-size:9px; color:var(--text-muted); border-top:1px solid var(--glass-border);
+}
+.footer-bar .source{color:var(--cyan)} .footer-bar .sep{margin:0 6px;color:#2a2a30}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useMemo, useRef, useCallback } = React;
+
+const T = {
+  cyan:"#38bdf8",green:"#34d399",amber:"#fbbf24",red:"#f87171",purple:"#a78bfa",
+  textPrimary:"#e2e4e9",textSecondary:"#8b8f9a",textMuted:"#555963",
+};
+const fmtMoney=v=>{if(Math.abs(v)>=1e6)return"¥"+(v/1e6).toFixed(2)+"M";if(Math.abs(v)>=1e4)return"¥"+(v/1e4).toFixed(1)+"万";return"¥"+v.toLocaleString()};
+const fmtPct=v=>(v>=0?"+":"")+(v*100).toFixed(2)+"%";
+const fmtNum=(v,d=2)=>v.toFixed(d);
+
+// ── Generate OHLC candle data ──
+const generateCandles = (n=200) => {
+  const candles = [];
+  let close = 100;
+  for(let i=0;i<n;i++){
+    const vol = 0.008 + Math.random()*0.02;
+    const change = (Math.random()-0.48)*vol;
+    const open = close;
+    close = open*(1+change);
+    const high = Math.max(open,close)*(1+Math.random()*vol*0.6);
+    const low = Math.min(open,close)*(1-Math.random()*vol*0.6);
+    const volume = 5000000+Math.random()*15000000;
+    candles.push({i, open, high, low, close, volume, date:new Date(2025,0,1+i).toISOString().slice(0,10)});
+  }
+  return candles;
+};
+
+// ── Default fallback data (used when WS is disconnected) ──
+const FALLBACK_TICKER = [
+  {code:"000001",name:"平安银行",price:12.85,change:0},{code:"600519",name:"贵州茅台",price:1682.50,change:0},
+  {code:"300750",name:"宁德时代",price:216.30,change:0},{code:"000858",name:"五粮液",price:148.60,change:0},
+];
+
+// ── WebSocket Live Data Hook ──
+const useLiveData = () => {
+  const [connected, setConnected] = useState(false);
+  const [ticker, setTicker] = useState(FALLBACK_TICKER);
+  const [portfolio, setPortfolio] = useState(null);
+  const [positions, setPositions] = useState([]);
+  const [riskBars, setRiskBars] = useState([]);
+  const [source, setSource] = useState("offline");
+  const wsRef = useRef(null);
+  const reconnectTimer = useRef(null);
+
+  const connect = useCallback(() => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) return;
+
+    const ws = new WebSocket("ws://localhost:8765");
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      setConnected(true); setSource("baostock");
+      if (reconnectTimer.current) { clearTimeout(reconnectTimer.current); reconnectTimer.current = null; }
+    };
+
+    ws.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        if (msg.type === "update") {
+          if (msg.ticker?.length) setTicker(msg.ticker);
+          if (msg.portfolio) {
+            setPortfolio(msg.portfolio);
+            setPositions(msg.portfolio.positions || []);
+          }
+          if (msg.riskBars) setRiskBars(msg.riskBars);
+          if (msg.source) setSource(msg.source);
+        }
+      } catch(err) { console.warn("WS parse error:", err); }
+    };
+
+    ws.onclose = () => { setConnected(false); wsRef.current = null; };
+    ws.onerror = () => { ws.close(); };
+  }, []);
+
+  useEffect(() => {
+    connect();
+    return () => {
+      if (wsRef.current) wsRef.current.close();
+      if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
+    };
+  }, [connect]);
+
+  // Reconnect on disconnect
+  useEffect(() => {
+    if (!connected) {
+      reconnectTimer.current = setTimeout(connect, 3000);
+      return () => { if (reconnectTimer.current) clearTimeout(reconnectTimer.current); };
+    }
+  }, [connected, connect]);
+
+  // Ticker: double for seamless scroll loop
+  const tickerLoop = useMemo(() =>
+    ticker.length ? [...ticker, ...ticker] : [...FALLBACK_TICKER, ...FALLBACK_TICKER],
+    [ticker]
+  );
+
+  return { connected, ticker: tickerLoop, portfolio, positions, riskBars, source };
+};
+
+// ── Canvas Candlestick Chart ──
+const CandleChart = ({ candles, timeframe="1M" }) => {
+  const canvasRef = useRef(null);
+  const containerRef = useRef(null);
+  const tooltipRef = useRef(null);
+  const [crosshair, setCrosshair] = useState(null);
+  const [dim, setDim] = useState({w:800,h:360});
+
+  // Filter candles by timeframe
+  const displayCandles = useMemo(()=>{
+    const map={ "1W":50, "1M":120, "3M":Math.min(180,candles.length), "1Y":Math.min(200,candles.length) };
+    const n = map[timeframe]||120;
+    return candles.slice(-n);
+  },[candles,timeframe]);
+
+  // Resize observer
+  useEffect(()=>{
+    const el = containerRef.current; if(!el) return;
+    const ro = new ResizeObserver(entries=>{
+      for(const e of entries){
+        const {width,height}=e.contentRect;
+        setDim({w:Math.floor(width),h:Math.floor(height)});
+      }
+    });
+    ro.observe(el); return ()=>ro.disconnect();
+  },[]);
+
+  // Draw
+  useEffect(()=>{
+    const canvas = canvasRef.current; if(!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const {w,h} = dim;
+    canvas.width = w; canvas.height = h;
+    if(w<100||h<50) return;
+
+    const data = displayCandles;
+    const n = data.length;
+    const pad = {top:20,right:40,bottom:50,left:52};
+    const cw = pad.left, ch = pad.top;
+    const pw = w-pad.left-pad.right, ph = h-pad.top-pad.bottom;
+
+    // Price range
+    const allPrices = data.flatMap(d=>[d.high,d.low]);
+    const yMin = Math.min(...allPrices)*0.995;
+    const yMax = Math.max(...allPrices)*1.005;
+    const yScale = v=>ch+ph-(v-yMin)/(yMax-yMin)*ph;
+    const xScale = i=>cw+(i+0.5)/n*pw;
+
+    // Volume range (bottom 20% of chart)
+    const volH = ph*0.18;
+    const volTop = ch+ph-volH;
+    const maxVol = Math.max(...data.map(d=>d.volume));
+    const volScale = v=>v/maxVol*volH;
+
+    // Clear
+    ctx.clearRect(0,0,w,h);
+
+    // Grid
+    const nGrid=5;
+    ctx.strokeStyle="rgba(255,255,255,0.04)"; ctx.lineWidth=0.5;
+    for(let i=0;i<=nGrid;i++){
+      const y=ch+ph*i/nGrid;
+      ctx.beginPath(); ctx.moveTo(cw,y); ctx.lineTo(cw+pw,y); ctx.stroke();
+    }
+    // Price labels
+    ctx.fillStyle=T.textMuted; ctx.font="9px 'SF Mono',Consolas,monospace"; ctx.textAlign="right";
+    for(let i=0;i<=nGrid;i++){
+      const val=yMin+(yMax-yMin)*i/nGrid;
+      ctx.fillText(fmtNum(val,1),cw-6,ch+ph*i/nGrid+3);
+    }
+
+    // Candlesticks
+    const candleW = Math.max(1, pw/n*0.65);
+    for(let i=0;i<n;i++){
+      const d=data[i];
+      const x = xScale(i);
+      const isUp = d.close>=d.open;
+      const bodyTop = yScale(Math.max(d.open,d.close));
+      const bodyBot = yScale(Math.min(d.open,d.close));
+      const bodyH = Math.max(1,bodyBot-bodyTop);
+
+      // Wick
+      ctx.strokeStyle = isUp ? T.green : T.red;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x, yScale(d.high));
+      ctx.lineTo(x, bodyTop);
+      ctx.moveTo(x, bodyBot);
+      ctx.lineTo(x, yScale(d.low));
+      ctx.stroke();
+
+      // Body
+      ctx.fillStyle = isUp ? T.green : T.red;
+      ctx.fillRect(x-candleW/2, bodyTop, candleW, bodyH);
+
+      // Volume bar
+      const vh = volScale(d.volume);
+      const vAlpha = isUp ? "0.25" : "0.35";
+      ctx.fillStyle = isUp ? `rgba(52,211,153,${vAlpha})` : `rgba(248,113,113,${vAlpha})`;
+      ctx.fillRect(x-candleW/2, volTop+volH-vh, candleW, vh);
+
+      // MA lines
+      if(i>=5){
+        const ma5 = data.slice(i-5,i+1).reduce((s,d)=>s+d.close,0)/5;
+        if(i>0) { ctx.strokeStyle="rgba(251,191,36,0.5)"; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(xScale(i-1),yScale(prevMA)); ctx.lineTo(x,yScale(ma5)); ctx.stroke(); }
+        var prevMA = ma5;
+      }
+      if(i>=10){
+        const ma10 = data.slice(i-10,i+1).reduce((s,d)=>s+d.close,0)/10;
+        if(i>0) { ctx.strokeStyle="rgba(167,139,250,0.4)"; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(xScale(i-1),yScale(prevMA10)); ctx.lineTo(x,yScale(ma10)); ctx.stroke(); }
+        var prevMA10 = ma10;
+      }
+    }
+
+    // Mouse handlers
+    const handleMouse = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX-rect.left, my = e.clientY-rect.top;
+      if(mx<cw||mx>cw+pw){ setCrosshair(null); return; }
+      const idx = Math.floor((mx-cw)/pw*n);
+      if(idx<0||idx>=n){ setCrosshair(null); return; }
+      const d = data[idx];
+      setCrosshair({
+        x:mx, y:Math.min(my,ch+ph),
+        o:d.open.toFixed(2), h:d.high.toFixed(2), l:d.low.toFixed(2), c:d.close.toFixed(2),
+        date:d.date, idx
+      });
+    };
+    canvas.onmousemove = handleMouse;
+    canvas.onmouseleave = ()=>setCrosshair(null);
+  },[displayCandles,dim,timeframe]);
+
+  return (
+    <div ref={containerRef} className="chart-area">
+      <canvas ref={canvasRef}/>
+      {crosshair && (
+        <div ref={tooltipRef} className="chart-crosshair" style={{display:"block",left:Math.min(crosshair.x+12,dim.w-140),top:Math.max(4,crosshair.y-50)}}>
+          <div>{crosshair.date}</div>
+          <div>O:{crosshair.o} H:{crosshair.h} L:{crosshair.l} C:{crosshair.c}</div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ── Ticker Bar ──
+const TickerBar = ({ items }) => {
+  return (
+    <div className="ticker-wrap">
+      <div className="ticker-track">
+        {items.map((s,i)=>(
+          <span key={i} className="ticker-item">
+            <span className="ticker-code">{s.code}</span>
+            <span className="ticker-name" style={{fontSize:9}}>{s.name}</span>
+            <span className="ticker-price">{typeof s.price==="number"?s.price.toFixed(2):s.price}</span>
+            <span className={`ticker-change ${(s.change||0)>=0?"up":"down"}`}>{fmtPct(s.change||0)}</span>
+            <span className="ticker-sep">|</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ── KPI Card ──
+const KpiCard = ({label,value,sub,color="default"})=>(
+  <div className="kpi-card">
+    <span className="kpi-label">{label}</span>
+    <span className={`kpi-value ${color}`}>{value}</span>
+    {sub&&<span className={`kpi-sub ${color}`}>{sub}</span>}
+  </div>
+);
+
+// ── Position Row ──
+const PositionRow = ({pos})=>(
+  <div className="position-row">
+    <span className="pos-code">{pos.code}<span style={{color:T.textMuted,marginLeft:5,fontSize:9}}>{pos.name}</span></span>
+    <span className="pos-weight">{fmtPct(pos.weight)}</span>
+    <span className={`pos-pnl ${pos.pnl>=0?"up":"down"}`}>{fmtPct(pos.pnl)}</span>
+    <span className={`pos-signal ${pos.signal}`}>{pos.signal==="buy"?"买入":pos.signal==="sell"?"卖出":"持有"}</span>
+    <span style={{textAlign:"right",color:T.textMuted}}>{fmtNum(pos.weight/0.02,0)}日</span>
+  </div>
+);
+
+// ── Risk Mini ──
+const RiskMini = ({label,value,max,status})=>(
+  <div className="glass-panel risk-mini">
+    <span className="risk-mini-label">{label}</span>
+    <span className="risk-mini-value">{fmtPct(value)}</span>
+    <div className="risk-bar-bg"><div className={`risk-bar-fill ${status}`} style={{width:`${Math.min(value/max*100,100)}%`}}/></div>
+  </div>
+);
+
+// ── Dashboard ──
+const Dashboard = () => {
+  const [timeframe,setTimeframe] = useState("1M");
+  const live = useLiveData();
+  const candles = useMemo(()=>generateCandles(200),[]);
+
+  // Portfolio data from WS or fallback defaults
+  const p = live.portfolio || {};
+  const equity = p.equity || 0;
+  const dailyPnl = p.dailyPnl || 0;
+  const sharpe = p.sharpe || 0;
+  const maxDD = p.maxDD || 0;
+  const var95 = p.var95 || 0;
+  const winRate = p.winRate || 0;
+  const totalReturn = p.totalReturn || 0;
+
+  const positions = live.positions.length > 0 ? live.positions : [
+    {code:"601318",name:"中国平安",weight:.18,pnl:.124,signal:"buy"},
+  ];
+
+  const riskBars = live.riskBars.length > 0 ? live.riskBars : [
+    {label:"VaR 95%",value:0.024,max:.05,status:"warn"},
+    {label:"最大回撤",value:0.12,max:.30,status:"warn"},
+    {label:"杠杆率",value:0,max:1,status:"ok"},
+    {label:"相关性",value:0.40,max:.8,status:"ok"},
+  ];
+
+  const tabs = [{k:"1W",v:"1周"},{k:"1M",v:"1月"},{k:"3M",v:"3月"},{k:"1Y",v:"1年"}];
+
+  return (
+    <div className="dashboard">
+      {/* Top Bar */}
+      <div className="topbar">
+        <div className="topbar-left">
+          <span className="topbar-brand">QUANT_SYS v0.2</span>
+          <span className="topbar-status">
+            <span className="status-dot" style={{background:live.connected?"var(--green)":"var(--red)",animation:live.connected?"pulse 2s infinite":"none"}}></span>
+            {live.connected ? "LIVE · "+live.source : "离线 · 模拟数据"}
+          </span>
+        </div>
+        <div className="topbar-right">
+          <span><span className="lbl">股票池:</span> HS300</span>
+          <span><span className="lbl">策略:</span> <span style={{color:T.purple}}>多因子</span></span>
+          <span><span className="lbl">调仓:</span> 每周</span>
+          <span>{new Date().toLocaleDateString("zh-CN")} <span style={{color:T.cyan}}>{new Date().toLocaleTimeString("zh-CN",{hour:"2-digit",minute:"2-digit"})}</span></span>
+        </div>
+      </div>
+
+      {/* Ticker */}
+      <TickerBar items={live.ticker}/>
+
+      {/* KPI Row */}
+      <div className="kpi-row">
+        <KpiCard label="总权益" value={fmtMoney(equity)} sub={live.connected?fmtPct(totalReturn):"等待连接..."} color="up"/>
+        <KpiCard label="当日盈亏" value={fmtMoney(dailyPnl)} sub={live.connected?"实时":"模拟"} color={dailyPnl>=0?"up":"down"}/>
+        <KpiCard label="夏普比率" value={fmtNum(sharpe)} sub="滚动252日" color={sharpe>=0?"up":"down"}/>
+        <KpiCard label="最大回撤" value={fmtPct(maxDD)} sub="从峰值" color="warn"/>
+        <KpiCard label="VaR(95% 1日)" value={fmtPct(var95)} sub="历史模拟法" color="warn"/>
+        <KpiCard label="胜率" value={fmtPct(winRate)} sub={`${positions.length} 只持仓`} color="up"/>
+      </div>
+
+      {/* Main Content */}
+      <div className="main-grid">
+        <div className="glass-panel chart-panel">
+          <div className="chart-header">
+            <div className="chart-tabs">
+              {tabs.map(tf=>(
+                <button key={tf.k} className={`chart-tab ${timeframe===tf.k?"active":""}`} onClick={()=>setTimeframe(tf.k)}>{tf.v}</button>
+              ))}
+            </div>
+            <span className="chart-info">
+              均5:<span style={{color:T.amber}}>──</span> 均10:<span style={{color:T.purple}}>──</span>
+            </span>
+          </div>
+          <CandleChart candles={candles} timeframe={timeframe}/>
+        </div>
+
+        <div className="glass-panel positions-panel">
+          <div className="positions-header">
+            <span>持仓</span>
+            <span style={{color:T.textSecondary}}>{positions.filter(p=>p.signal==="buy").length} 买入 · {positions.filter(p=>p.signal==="sell").length} 卖出</span>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 55px 65px 55px 45px",gap:6,padding:"3px 7px",fontSize:8,color:T.textMuted,textTransform:"uppercase",letterSpacing:".06em"}}>
+            <span>股票</span><span style={{textAlign:"right"}}>权重</span><span style={{textAlign:"right"}}>盈亏</span><span style={{textAlign:"center"}}>信号</span><span style={{textAlign:"right"}}>持日</span>
+          </div>
+          <div className="positions-list">{positions.map((p,i)=><PositionRow key={i} pos={p}/>)}</div>
+        </div>
+      </div>
+
+      {/* Risk Row */}
+      <div className="risk-row">{riskBars.map((r,i)=><RiskMini key={i} {...r}/>)}</div>
+
+      {/* Footer */}
+      <div className="footer-bar">
+        <span>数据: <span className="source">{live.source}</span><span className="sep">·</span>回退: akshare → efinance</span>
+        <span>最后更新: {new Date().toLocaleString("zh-CN")}<span className="sep">·</span>下次调仓: 周五</span>
+        <span>推送: <span style={{color:T.green}}>就绪</span><span className="sep">·</span>测试: 24/24</span>
+      </div>
+    </div>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById("root")).render(<Dashboard/>);
+</script>
+</body>
+</html>

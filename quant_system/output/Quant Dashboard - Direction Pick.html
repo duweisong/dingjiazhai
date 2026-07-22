@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quant Dashboard · 方向选择</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: #0a0a0c;
+    color: #d4d4d8;
+    font-family: system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    padding: 2rem;
+  }
+  h1 {
+    font-size: 1rem;
+    font-weight: 400;
+    color: #71717a;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    letter-spacing: 0.05em;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  @media (max-width: 900px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+  .cell {
+    background: #111114;
+    border: 1px solid #27272a;
+    border-radius: 6px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color .2s, transform .2s;
+  }
+  .cell:hover {
+    border-color: #52525b;
+    transform: translateY(-2px);
+  }
+  .cell-header {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #1c1c20;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .cell-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    color: #a1a1aa;
+    text-transform: uppercase;
+  }
+  .cell-number {
+    font-size: 0.75rem;
+    color: #52525b;
+    font-variant-numeric: tabular-nums;
+  }
+  .preview {
+    aspect-ratio: 16/9;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ── Direction A: Bloomberg Dark Terminal ── */
+  .dir-a {
+    background: #0a0b0e;
+    font-family: 'Consolas', 'SF Mono', 'Courier New', monospace;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .dir-a .topbar {
+    display: flex; justify-content: space-between;
+    font-size: 0.55rem; color: #52525b;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid #1a1a1e;
+    margin-bottom: 0.2rem;
+  }
+  .dir-a .ticker-row {
+    display: flex; gap: 1.2rem;
+    font-size: 0.65rem;
+  }
+  .dir-a .ticker { color: #fbbf24; }
+  .dir-a .ticker .pos { color: #34d399; }
+  .dir-a .ticker .neg { color: #f87171; }
+  .dir-a .grid-2x2 {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem;
+    flex:1;
+  }
+  .dir-a .mini-panel {
+    border: 1px solid #1e1e24;
+    padding: 0.4rem 0.5rem;
+    font-size: 0.5rem;
+    color: #71717a;
+    display:flex; flex-direction: column; gap: 0.2rem;
+  }
+  .dir-a .mini-panel .title { color: #a1a1aa; font-size: 0.5rem; letter-spacing: 0.06em; text-transform: uppercase; }
+  .dir-a .mini-panel .val { color: #34d399; font-size: 0.7rem; }
+  .dir-a .mini-panel .val.warn { color: #fbbf24; }
+
+  /* ── Direction B: Neo-Brutalist ── */
+  .dir-b {
+    background: #f5f0e8;
+    font-family: 'Courier New', monospace;
+    padding: 0.8rem;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+  .dir-b .header {
+    border: 2px solid #1a1a1a;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    display: flex; justify-content: space-between;
+  }
+  .dir-b .cards {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.4rem;
+    flex:1;
+  }
+  .dir-b .card {
+    border: 2px solid #1a1a1a;
+    padding: 0.5rem;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .dir-b .card .label { font-size: 0.45rem; color: #666; letter-spacing: 0.06em; }
+  .dir-b .card .big { font-size: 0.85rem; font-weight: 700; color: #1a1a1a; }
+  .dir-b .card .big.up { color: #166534; }
+  .dir-b .card .big.down { color: #991b1b; }
+  .dir-b .chart-area {
+    border: 2px solid #1a1a1a;
+    flex:1;
+    display:flex; align-items: flex-end;
+    padding: 0.3rem;
+  }
+  .dir-b .bar {
+    flex:1; margin:0 1px;
+    background: #1a1a1a;
+    min-height: 2px;
+  }
+
+  /* ── Direction C: Glass Fintech ── */
+  .dir-c {
+    background: radial-gradient(ellipse at 30% 20%, #0f172a 0%, #020617 100%);
+    padding: 0.8rem;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+  .dir-c .top {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.55rem; color: #64748b;
+  }
+  .dir-c .glass-row {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.4rem;
+  }
+  .dir-c .glass-card {
+    background: rgba(255,255,255,0.03);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 6px;
+    padding: 0.5rem;
+    display: flex; flex-direction: column; gap: 0.2rem;
+  }
+  .dir-c .glass-card .label { font-size: 0.45rem; color: #64748b; }
+  .dir-c .glass-card .val { font-size: 0.7rem; color: #e2e8f0; font-weight: 500; }
+  .dir-c .glass-card .val.green { color: #34d399; }
+  .dir-c .glass-card .val.red { color: #f87171; }
+  .dir-c .main-panel {
+    flex:1;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 6px;
+    display:flex;
+  }
+  .dir-c .glow-line {
+    width: 100%; height: 1px;
+    background: linear-gradient(90deg, transparent, #38bdf8, transparent);
+    opacity: 0.3;
+  }
+
+  .cell-info {
+    padding: 0.75rem 1rem;
+  }
+  .cell-info .pitch {
+    font-size: 0.75rem;
+    color: #d4d4d8;
+    font-weight: 500;
+    margin-bottom: 0.3rem;
+  }
+  .cell-info .flagship {
+    font-size: 0.6rem;
+    color: #71717a;
+    margin-bottom: 0.3rem;
+  }
+  .cell-info .keywords {
+    font-size: 0.6rem;
+    color: #52525b;
+    font-style: italic;
+  }
+
+  .instruction {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: 0.7rem;
+    color: #52525b;
+  }
+  .instruction span {
+    padding: 0.2rem 0.6rem;
+    border: 1px solid #27272a;
+    border-radius: 3px;
+    margin: 0 0.15rem;
+    color: #a1a1aa;
+  }
+</style>
+</head>
+<body>
+
+<h1>Quant Dashboard · 设计方向选择</h1>
+
+<div class="grid">
+
+  <!-- Direction A -->
+  <div class="cell" onclick="this.style.borderColor='#fbbf24'">
+    <div class="cell-header">
+      <span class="cell-label">Direction A</span>
+      <span class="cell-number">01</span>
+    </div>
+    <div class="preview">
+      <div class="dir-a">
+        <div class="topbar">
+          <span>QUANT_SYS v0.1</span>
+          <span>2026-06-12 13:30 CST</span>
+        </div>
+        <div class="ticker-row">
+          <span class="ticker">000001 <span class="pos">+2.4%</span></span>
+          <span class="ticker">600519 <span class="neg">-0.8%</span></span>
+          <span class="ticker">300750 <span class="pos">+5.1%</span></span>
+          <span class="ticker">000858 <span class="neg">-1.2%</span></span>
+        </div>
+        <div class="grid-2x2">
+          <div class="mini-panel">
+            <span class="title">P&L (MTD)</span>
+            <span class="val">+¥128,450</span>
+          </div>
+          <div class="mini-panel">
+            <span class="title">VaR 95% 1d</span>
+            <span class="val warn">-2.43%</span>
+          </div>
+          <div class="mini-panel">
+            <span class="title">Sharpe Ratio</span>
+            <span class="val">1.75</span>
+          </div>
+          <div class="mini-panel">
+            <span class="title">Max Drawdown</span>
+            <span class="val warn">-12.5%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="cell-info">
+      <div class="pitch">Bloomberg Dark Terminal · 数据密集、等宽字体、琥珀/绿色数据光</div>
+      <div class="flagship">Bloomberg Terminal · TradingView · Wind 终端</div>
+      <div class="keywords">monospace · data-dense · amber-glow · functional</div>
+    </div>
+  </div>
+
+  <!-- Direction B -->
+  <div class="cell" onclick="this.style.borderColor='#f5f0e8'">
+    <div class="cell-header">
+      <span class="cell-label">Direction B</span>
+      <span class="cell-number">02</span>
+    </div>
+    <div class="preview">
+      <div class="dir-b">
+        <div class="header">
+          <span>PORTFOLIO STATUS</span>
+          <span>2026-06-12</span>
+        </div>
+        <div class="cards">
+          <div class="card">
+            <span class="label">Equity</span>
+            <span class="big up">¥1.28M</span>
+          </div>
+          <div class="card">
+            <span class="label">Day P&L</span>
+            <span class="big up">+¥12.4k</span>
+          </div>
+          <div class="card">
+            <span class="label">Sharpe</span>
+            <span class="big">1.75</span>
+          </div>
+        </div>
+        <div class="chart-area">
+          <div class="bar" style="height:40%"></div>
+          <div class="bar" style="height:55%"></div>
+          <div class="bar" style="height:35%"></div>
+          <div class="bar" style="height:70%"></div>
+          <div class="bar" style="height:60%"></div>
+          <div class="bar" style="height:80%"></div>
+          <div class="bar" style="height:50%"></div>
+          <div class="bar" style="height:90%"></div>
+          <div class="bar" style="height:45%"></div>
+          <div class="bar" style="height:65%"></div>
+          <div class="bar" style="height:75%"></div>
+          <div class="bar" style="height:55%"></div>
+        </div>
+      </div>
+    </div>
+    <div class="cell-info">
+      <div class="pitch">Neo-Brutalist Trading Desk · 粗边框、裸数据、高对比、功能诚实</div>
+      <div class="flagship">Linear · Gumroad (old) · Figma (early) · brutalistwebsites</div>
+      <div class="keywords">bold-borders · raw-data · high-contrast · honest</div>
+    </div>
+  </div>
+
+  <!-- Direction C -->
+  <div class="cell" onclick="this.style.borderColor='#38bdf8'">
+    <div class="cell-header">
+      <span class="cell-label">Direction C</span>
+      <span class="cell-number">03</span>
+    </div>
+    <div class="preview">
+      <div class="dir-c">
+        <div class="top">
+          <span>QUANT SYSTEM</span>
+          <span>Portfolio Overview</span>
+          <span>Jun 12, 2026</span>
+        </div>
+        <div class="glass-row">
+          <div class="glass-card">
+            <span class="label">Total Equity</span>
+            <span class="val">¥1,284,500</span>
+          </div>
+          <div class="glass-card">
+            <span class="label">Daily P&L</span>
+            <span class="val green">+¥12,450</span>
+          </div>
+          <div class="glass-card">
+            <span class="label">Sharpe</span>
+            <span class="val">1.75</span>
+          </div>
+          <div class="glass-card">
+            <span class="label">Max DD</span>
+            <span class="val red">-12.5%</span>
+          </div>
+        </div>
+        <div class="main-panel"></div>
+        <div class="glow-line"></div>
+      </div>
+    </div>
+    <div class="cell-info">
+      <div class="pitch">Glass Fintech Dashboard · 暗色玻璃拟态、青蓝辉光、高端金融 App 体验</div>
+      <div class="flagship">Robinhood · Coinbase · Stripe Dashboard · Linear</div>
+      <div class="keywords">glassmorphism · cyan-glow · frosted-glass · premium-fintech</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="instruction">
+  选一个方向：按 <span>A</span> <span>B</span> <span>C</span> — 我会把它做成完整的响应式 Dashboard
+</div>
+
+</body>
+</html>

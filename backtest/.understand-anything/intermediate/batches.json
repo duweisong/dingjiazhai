@@ -1,0 +1,285 @@
+{
+  "schemaVersion": 1,
+  "algorithm": "louvain",
+  "totalFiles": 26,
+  "totalBatches": 2,
+  "exportsByPath": {
+    "config.py": [],
+    "data_loader.py": [
+      "_fetch_via_efinance",
+      "_fetch_via_akshare",
+      "fetch_stock_data",
+      "compute_indicators",
+      "get_data"
+    ],
+    "engine.py": [
+      "Trade",
+      "BacktestResult",
+      "BacktestEngine"
+    ],
+    "filters.py": [
+      "MarketRegimeFilter",
+      "VolumePriceAnalyzer",
+      "ATRDynamicStops"
+    ],
+    "main.py": [
+      "run_single_strategy",
+      "run_all_strategies",
+      "run_optimization",
+      "run_walk_forward",
+      "main"
+    ],
+    "metrics.py": [
+      "analyze_monthly",
+      "analyze_yearly",
+      "trade_analysis",
+      "performance_summary"
+    ],
+    "optimizer.py": [
+      "WalkForwardOptimizer",
+      "AdaptivePositionSizer"
+    ],
+    "patterns.py": [
+      "CandlestickPatterns",
+      "ConsecutiveBarAnalyzer"
+    ],
+    "strategies/__init__.py": [
+      "get_strategy",
+      "list_strategies"
+    ],
+    "strategies/advanced_swing.py": [
+      "AdvancedSwingStrategy",
+      "TrendFollowingStrategy",
+      "VolumeBreakoutStrategy"
+    ],
+    "strategies/base.py": [
+      "Signal",
+      "Position",
+      "BaseStrategy"
+    ],
+    "strategies/bollinger.py": [
+      "BollingerStrategy"
+    ],
+    "strategies/composite.py": [
+      "CompositeStrategy"
+    ],
+    "strategies/ma_cross.py": [
+      "MACrossStrategy"
+    ],
+    "strategies/macd.py": [
+      "MACDStrategy"
+    ],
+    "strategies/pattern_swing.py": [
+      "PatternEnhancedStrategy"
+    ],
+    "strategies/rsi.py": [
+      "RSIStrategy"
+    ],
+    "visualize.py": [
+      "plot_equity_curve",
+      "plot_trade_analysis",
+      "plot_strategy_comparison",
+      "generate_html_report"
+    ]
+  },
+  "batches": [
+    {
+      "batchIndex": 1,
+      "files": [
+        {
+          "path": "output/advanced_swing_optimized_report.html",
+          "language": "html",
+          "sizeLines": 686,
+          "fileCategory": "markup"
+        },
+        {
+          "path": "output/ma_cross_optimized_report.html",
+          "language": "html",
+          "sizeLines": 686,
+          "fileCategory": "markup"
+        },
+        {
+          "path": "output/ma_cross_report.html",
+          "language": "html",
+          "sizeLines": 686,
+          "fileCategory": "markup"
+        },
+        {
+          "path": "output/pattern_enhanced_report.html",
+          "language": "html",
+          "sizeLines": 686,
+          "fileCategory": "markup"
+        },
+        {
+          "path": "output/volume_breakout_optimized_report.html",
+          "language": "html",
+          "sizeLines": 616,
+          "fileCategory": "markup"
+        },
+        {
+          "path": "output/volume_breakout_report.html",
+          "language": "html",
+          "sizeLines": 536,
+          "fileCategory": "markup"
+        }
+      ],
+      "batchImportData": {
+        "output/advanced_swing_optimized_report.html": [],
+        "output/ma_cross_optimized_report.html": [],
+        "output/ma_cross_report.html": [],
+        "output/pattern_enhanced_report.html": [],
+        "output/volume_breakout_optimized_report.html": [],
+        "output/volume_breakout_report.html": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 2,
+      "files": [
+        {
+          "path": ".understand-anything/config.json",
+          "language": "json",
+          "sizeLines": 1,
+          "fileCategory": "config"
+        },
+        {
+          "path": "config.py",
+          "language": "python",
+          "sizeLines": 53,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data_loader.py",
+          "language": "python",
+          "sizeLines": 311,
+          "fileCategory": "code"
+        },
+        {
+          "path": "engine.py",
+          "language": "python",
+          "sizeLines": 394,
+          "fileCategory": "code"
+        },
+        {
+          "path": "filters.py",
+          "language": "python",
+          "sizeLines": 342,
+          "fileCategory": "code"
+        },
+        {
+          "path": "main.py",
+          "language": "python",
+          "sizeLines": 435,
+          "fileCategory": "code"
+        },
+        {
+          "path": "metrics.py",
+          "language": "python",
+          "sizeLines": 116,
+          "fileCategory": "code"
+        },
+        {
+          "path": "optimizer.py",
+          "language": "python",
+          "sizeLines": 324,
+          "fileCategory": "code"
+        },
+        {
+          "path": "patterns.py",
+          "language": "python",
+          "sizeLines": 268,
+          "fileCategory": "code"
+        },
+        {
+          "path": "requirements.txt",
+          "language": "txt",
+          "sizeLines": 6,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "strategies/__init__.py",
+          "language": "python",
+          "sizeLines": 48,
+          "fileCategory": "code"
+        },
+        {
+          "path": "strategies/advanced_swing.py",
+          "language": "python",
+          "sizeLines": 452,
+          "fileCategory": "code"
+        },
+        {
+          "path": "strategies/base.py",
+          "language": "python",
+          "sizeLines": 59,
+          "fileCategory": "code"
+        },
+        {
+          "path": "strategies/bollinger.py",
+          "language": "python",
+          "sizeLines": 53,
+          "fileCategory": "code"
+        },
+        {
+          "path": "strategies/composite.py",
+          "language": "python",
+          "sizeLines": 89,
+          "fileCategory": "code"
+        },
+        {
+          "path": "strategies/ma_cross.py",
+          "language": "python",
+          "sizeLines": 60,
+          "fileCategory": "code"
+        },
+        {
+          "path": "strategies/macd.py",
+          "language": "python",
+          "sizeLines": 51,
+          "fileCategory": "code"
+        },
+        {
+          "path": "strategies/pattern_swing.py",
+          "language": "python",
+          "sizeLines": 215,
+          "fileCategory": "code"
+        },
+        {
+          "path": "strategies/rsi.py",
+          "language": "python",
+          "sizeLines": 54,
+          "fileCategory": "code"
+        },
+        {
+          "path": "visualize.py",
+          "language": "python",
+          "sizeLines": 391,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        ".understand-anything/config.json": [],
+        "config.py": [],
+        "data_loader.py": [],
+        "engine.py": [],
+        "filters.py": [],
+        "main.py": [],
+        "metrics.py": [],
+        "optimizer.py": [],
+        "patterns.py": [],
+        "requirements.txt": [],
+        "strategies/__init__.py": [],
+        "strategies/advanced_swing.py": [],
+        "strategies/base.py": [],
+        "strategies/bollinger.py": [],
+        "strategies/composite.py": [],
+        "strategies/ma_cross.py": [],
+        "strategies/macd.py": [],
+        "strategies/pattern_swing.py": [],
+        "strategies/rsi.py": [],
+        "visualize.py": []
+      },
+      "neighborMap": {}
+    }
+  ]
+}

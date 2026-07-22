@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>网格回测报告 — 000948</title>
+<style>
+  :root { --bg: #0f172a; --surface: #1e293b; --text: #e2e8f0;
+          --accent: #3b82f6; --green: #22c55e; --red: #ef4444; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif;
+         background: var(--bg); color: var(--text); padding: 2rem; }
+  h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
+  h2 { font-size: 1.3rem; margin: 1.5rem 0 0.8rem; color: var(--accent); }
+  .subtitle { color: #94a3b8; margin-bottom: 1.5rem; }
+  table { width:100%; border-collapse:collapse; margin-bottom:1rem;
+           background: var(--surface); border-radius: 8px; overflow: hidden; }
+  th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #334155; }
+  th { background: #334155; font-weight: 600; color: #94a3b8; font-size:0.85rem; }
+  td { font-size: 0.9rem; }
+  .summary-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+                     gap: 1rem; margin-bottom: 1.5rem; }
+  .card { background: var(--surface); padding: 1rem; border-radius: 8px;
+           border-left: 4px solid var(--accent); }
+  .card .label { color: #94a3b8; font-size:0.8rem; }
+  .card .value { font-size:1.5rem; font-weight:700; margin-top:0.3rem; }
+  .card .value.positive { color: var(--green); }
+  .card .value.negative { color: var(--red); }
+  footer { margin-top:2rem; color:#64748b; font-size:0.8rem; text-align:center; }
+</style>
+</head>
+<body>
+
+<h1>📊 网格交易回测报告</h1>
+<p class="subtitle">标的: 000948.SZ | 生成时间: 2026-06-12 13:09</p>
+
+<div class="summary-cards">
+  <div class="card">
+    <div class="label">总收益率</div>
+    <div class="value positive">
+      +376.16%</div>
+  </div>
+  <div class="card">
+    <div class="label">年化收益率</div>
+    <div class="value positive">
+      +31.03%</div>
+  </div>
+  <div class="card">
+    <div class="label">夏普比率</div>
+    <div class="value">0.72</div>
+  </div>
+  <div class="card">
+    <div class="label">最大回撤</div>
+    <div class="value negative">-42.09%</div>
+  </div>
+  <div class="card">
+    <div class="label">胜率</div>
+    <div class="value">100.0%</div>
+  </div>
+  <div class="card">
+    <div class="label">最终价值</div>
+    <div class="value">476,157</div>
+  </div>
+</div>
+
+<h2>📋 完整指标</h2>
+<table><tr><td>标的代码</td><td>000948</td></tr>
+<tr><td>网格步长</td><td>0.5%</td></tr>
+<tr><td>网格数量</td><td>10</td></tr>
+<tr><td>单格仓位</td><td>15%</td></tr>
+<tr><td>网格模式</td><td>geometric</td></tr>
+<tr><td>网格线数</td><td>195</td></tr>
+<tr><td>价格下限</td><td>5.83</td></tr>
+<tr><td>价格上限</td><td>15.35</td></tr>
+<tr><td>总收益率</td><td>376.16%</td></tr>
+<tr><td>年化收益率</td><td>31.03%</td></tr>
+<tr><td>夏普比率</td><td>0.72</td></tr>
+<tr><td>最大回撤</td><td>-42.09%</td></tr>
+<tr><td>卡尔玛比率</td><td>0.74</td></tr>
+<tr><td>胜率</td><td>100.0%</td></tr>
+<tr><td>总交易次数</td><td>3058</td></tr>
+<tr><td>盈利笔数</td><td>1521</td></tr>
+<tr><td>笔均盈利</td><td>238.91</td></tr>
+<tr><td>网格利用率</td><td>52.1%</td></tr>
+<tr><td>最终资金</td><td>476,157.20</td></tr>
+<tr><td>最大持仓市值</td><td>370,279.00</td></tr>
+</table>
+
+<h2>📈 网格参数</h2>
+<table>
+  <tr><th>参数</th><th>值</th></tr>
+  <tr><td>步长</td><td>0.5%</td></tr>
+  <tr><td>网格数</td><td>10</td></tr>
+  <tr><td>单格仓位</td><td>15%</td></tr>
+  <tr><td>网格模式</td><td>geometric</td></tr>
+  <tr><td>价格区间</td><td>5.83 ~ 15.35</td></tr>
+  <tr><td>网格线数</td><td>195</td></tr>
+  <tr><td>止损线</td><td>15%</td></tr>
+</table>
+
+<h2>🔄 最近交易记录</h2>
+<table>
+  <tr><th>日期</th><th>方向</th><th>价格</th><th>股数</th><th>金额</th><th>网格</th></tr>
+  <tr><td>2024-09-11</td><td style='color:#ef4444'>BUY</td><td>13.29</td><td>1,100</td><td>14,616</td><td>165</td></tr>
+<tr><td>2024-09-11</td><td style='color:#ef4444'>BUY</td><td>13.35</td><td>1,100</td><td>14,688</td><td>166</td></tr>
+<tr><td>2024-09-11</td><td style='color:#ef4444'>BUY</td><td>13.42</td><td>1,100</td><td>14,762</td><td>167</td></tr>
+<tr><td>2024-09-12</td><td style='color:#22c55e'>SELL</td><td>13.49</td><td>1,100</td><td>14,836</td><td>168</td></tr>
+<tr><td>2024-09-12</td><td style='color:#22c55e'>SELL</td><td>13.55</td><td>1,100</td><td>14,909</td><td>169</td></tr>
+<tr><td>2024-09-12</td><td style='color:#22c55e'>SELL</td><td>13.62</td><td>1,100</td><td>14,984</td><td>170</td></tr>
+<tr><td>2024-09-12</td><td style='color:#22c55e'>SELL</td><td>13.69</td><td>1,100</td><td>15,059</td><td>171</td></tr>
+<tr><td>2024-09-12</td><td style='color:#22c55e'>SELL</td><td>13.76</td><td>1,000</td><td>13,759</td><td>172</td></tr>
+<tr><td>2024-09-12</td><td style='color:#22c55e'>SELL</td><td>13.83</td><td>1,000</td><td>13,828</td><td>173</td></tr>
+<tr><td>2024-09-12</td><td style='color:#22c55e'>SELL</td><td>13.90</td><td>1,000</td><td>13,897</td><td>174</td></tr>
+<tr><td>2024-09-12</td><td style='color:#22c55e'>SELL</td><td>13.97</td><td>1,000</td><td>13,966</td><td>175</td></tr>
+<tr><td>2024-09-12</td><td style='color:#22c55e'>SELL</td><td>14.04</td><td>1,100</td><td>15,440</td><td>176</td></tr>
+<tr><td>2024-09-12</td><td style='color:#22c55e'>SELL</td><td>14.11</td><td>1,100</td><td>15,517</td><td>177</td></tr>
+<tr><td>2024-09-12</td><td style='color:#22c55e'>SELL</td><td>14.18</td><td>1,100</td><td>15,595</td><td>178</td></tr>
+<tr><td>2024-09-12</td><td style='color:#22c55e'>SELL</td><td>14.25</td><td>1,100</td><td>15,673</td><td>179</td></tr>
+<tr><td>2024-09-12</td><td style='color:#22c55e'>SELL</td><td>14.32</td><td>1,000</td><td>14,319</td><td>180</td></tr>
+<tr><td>2024-09-12</td><td style='color:#22c55e'>SELL</td><td>14.39</td><td>1,100</td><td>15,829</td><td>181</td></tr>
+<tr><td>2024-09-12</td><td style='color:#22c55e'>SELL</td><td>14.46</td><td>1,000</td><td>14,462</td><td>182</td></tr>
+<tr><td>2024-09-12</td><td style='color:#22c55e'>SELL</td><td>14.54</td><td>1,000</td><td>14,535</td><td>183</td></tr>
+<tr><td>2024-09-12</td><td style='color:#22c55e'>SELL</td><td>14.61</td><td>1,000</td><td>14,607</td><td>184</td></tr>
+<tr><td>2024-09-12</td><td style='color:#22c55e'>SELL</td><td>14.68</td><td>1,000</td><td>14,680</td><td>185</td></tr>
+<tr><td>2024-09-12</td><td style='color:#22c55e'>SELL</td><td>14.75</td><td>1,100</td><td>16,229</td><td>186</td></tr>
+<tr><td>2024-09-13</td><td style='color:#22c55e'>SELL</td><td>14.83</td><td>1,000</td><td>14,828</td><td>187</td></tr>
+<tr><td>2024-09-18</td><td style='color:#ef4444'>BUY</td><td>14.68</td><td>1,000</td><td>14,680</td><td>185</td></tr>
+<tr><td>2024-09-18</td><td style='color:#ef4444'>BUY</td><td>14.75</td><td>1,000</td><td>14,754</td><td>186</td></tr>
+<tr><td>2024-09-18</td><td style='color:#ef4444'>BUY</td><td>14.83</td><td>1,000</td><td>14,828</td><td>187</td></tr>
+<tr><td>2024-09-18</td><td style='color:#ef4444'>BUY</td><td>14.90</td><td>1,000</td><td>14,902</td><td>188</td></tr>
+<tr><td>2024-09-18</td><td style='color:#ef4444'>BUY</td><td>14.98</td><td>1,000</td><td>14,976</td><td>189</td></tr>
+<tr><td>2024-09-18</td><td style='color:#ef4444'>BUY</td><td>15.05</td><td>900</td><td>13,546</td><td>190</td></tr>
+<tr><td>2024-09-18</td><td style='color:#ef4444'>BUY</td><td>15.13</td><td>900</td><td>13,613</td><td>191</td></tr>
+<tr><td>2024-09-18</td><td style='color:#ef4444'>BUY</td><td>15.20</td><td>900</td><td>13,682</td><td>192</td></tr>
+<tr><td>2024-09-18</td><td style='color:#ef4444'>BUY</td><td>15.28</td><td>900</td><td>13,750</td><td>193</td></tr>
+<tr><td>2024-09-19</td><td style='color:#22c55e'>SELL</td><td>15.28</td><td>900</td><td>13,750</td><td>193</td></tr>
+<tr><td>2024-09-19</td><td style='color:#22c55e'>SELL</td><td>15.35</td><td>900</td><td>13,819</td><td>194</td></tr>
+<tr><td>2025-01-06</td><td style='color:#ef4444'>BUY</td><td>15.20</td><td>900</td><td>13,682</td><td>192</td></tr>
+<tr><td>2025-01-06</td><td style='color:#ef4444'>BUY</td><td>15.28</td><td>900</td><td>13,750</td><td>193</td></tr>
+<tr><td>2025-01-07</td><td style='color:#22c55e'>SELL</td><td>15.35</td><td>900</td><td>13,819</td><td>194</td></tr>
+<tr><td>2025-01-08</td><td style='color:#ef4444'>BUY</td><td>15.28</td><td>900</td><td>13,750</td><td>193</td></tr>
+<tr><td>2025-01-13</td><td style='color:#22c55e'>SELL</td><td>15.20</td><td>900</td><td>13,682</td><td>192</td></tr>
+<tr><td>2025-01-13</td><td style='color:#22c55e'>SELL</td><td>15.28</td><td>900</td><td>13,750</td><td>193</td></tr>
+<tr><td>2025-01-13</td><td style='color:#22c55e'>SELL</td><td>15.35</td><td>900</td><td>13,819</td><td>194</td></tr>
+<tr><td>2025-04-08</td><td style='color:#ef4444'>BUY</td><td>15.13</td><td>900</td><td>13,613</td><td>191</td></tr>
+<tr><td>2025-04-08</td><td style='color:#ef4444'>BUY</td><td>15.20</td><td>900</td><td>13,682</td><td>192</td></tr>
+<tr><td>2025-04-08</td><td style='color:#ef4444'>BUY</td><td>15.28</td><td>900</td><td>13,750</td><td>193</td></tr>
+<tr><td>2025-04-09</td><td style='color:#ef4444'>BUY</td><td>14.25</td><td>1,000</td><td>14,248</td><td>179</td></tr>
+<tr><td>2025-04-09</td><td style='color:#ef4444'>BUY</td><td>14.32</td><td>1,000</td><td>14,319</td><td>180</td></tr>
+<tr><td>2025-04-09</td><td style='color:#ef4444'>BUY</td><td>14.39</td><td>1,000</td><td>14,390</td><td>181</td></tr>
+<tr><td>2025-04-09</td><td style='color:#ef4444'>BUY</td><td>14.46</td><td>1,000</td><td>14,462</td><td>182</td></tr>
+<tr><td>2025-04-09</td><td style='color:#ef4444'>BUY</td><td>14.54</td><td>1,000</td><td>14,535</td><td>183</td></tr>
+<tr><td>2025-04-09</td><td style='color:#ef4444'>BUY</td><td>14.61</td><td>1,000</td><td>14,607</td><td>184</td></tr>
+
+</table>
+
+<h2>📅 月度收益</h2>
+<table>
+  <tr><th>月份</th><th>收益率</th><th>累计净值</th></tr>
+  <tr><td>2020-01</td><td style='color:#22c55e'>+2.09%</td><td>1.0209</td></tr>
+<tr><td>2020-02</td><td style='color:#22c55e'>+12.62%</td><td>1.1498</td></tr>
+<tr><td>2020-03</td><td style='color:#ef4444'>-4.84%</td><td>1.0942</td></tr>
+<tr><td>2020-04</td><td style='color:#22c55e'>+7.48%</td><td>1.1760</td></tr>
+<tr><td>2020-05</td><td style='color:#ef4444'>-1.33%</td><td>1.1603</td></tr>
+<tr><td>2020-06</td><td style='color:#22c55e'>+7.57%</td><td>1.2481</td></tr>
+<tr><td>2020-07</td><td style='color:#22c55e'>+6.60%</td><td>1.3305</td></tr>
+<tr><td>2020-08</td><td style='color:#22c55e'>+4.77%</td><td>1.3940</td></tr>
+<tr><td>2020-09</td><td style='color:#ef4444'>-13.14%</td><td>1.2108</td></tr>
+<tr><td>2020-10</td><td style='color:#ef4444'>-9.25%</td><td>1.0988</td></tr>
+<tr><td>2020-11</td><td style='color:#22c55e'>+0.47%</td><td>1.1040</td></tr>
+<tr><td>2020-12</td><td style='color:#ef4444'>-8.42%</td><td>1.0111</td></tr>
+<tr><td>2021-01</td><td style='color:#ef4444'>-9.21%</td><td>0.9180</td></tr>
+<tr><td>2021-02</td><td style='color:#22c55e'>+0.34%</td><td>0.9211</td></tr>
+<tr><td>2021-03</td><td style='color:#22c55e'>+5.76%</td><td>0.9741</td></tr>
+<tr><td>2021-04</td><td style='color:#22c55e'>+6.55%</td><td>1.0380</td></tr>
+<tr><td>2021-05</td><td style='color:#22c55e'>+28.49%</td><td>1.3337</td></tr>
+<tr><td>2021-06</td><td style='color:#22c55e'>+8.20%</td><td>1.4431</td></tr>
+<tr><td>2021-07</td><td style='color:#ef4444'>-10.55%</td><td>1.2908</td></tr>
+<tr><td>2021-08</td><td style='color:#22c55e'>+12.89%</td><td>1.4571</td></tr>
+<tr><td>2021-09</td><td style='color:#ef4444'>-2.09%</td><td>1.4267</td></tr>
+<tr><td>2021-10</td><td style='color:#ef4444'>-0.64%</td><td>1.4175</td></tr>
+<tr><td>2021-11</td><td style='color:#22c55e'>+10.23%</td><td>1.5625</td></tr>
+<tr><td>2021-12</td><td style='color:#22c55e'>+1.09%</td><td>1.5795</td></tr>
+<tr><td>2022-01</td><td style='color:#22c55e'>+4.24%</td><td>1.6466</td></tr>
+<tr><td>2022-02</td><td style='color:#22c55e'>+11.95%</td><td>1.8433</td></tr>
+<tr><td>2022-03</td><td style='color:#ef4444'>-4.22%</td><td>1.7655</td></tr>
+<tr><td>2022-04</td><td style='color:#ef4444'>-22.05%</td><td>1.3761</td></tr>
+<tr><td>2022-05</td><td style='color:#22c55e'>+7.15%</td><td>1.4745</td></tr>
+<tr><td>2022-06</td><td style='color:#22c55e'>+9.58%</td><td>1.6157</td></tr>
+<tr><td>2022-07</td><td style='color:#ef4444'>-0.00%</td><td>1.6156</td></tr>
+<tr><td>2022-08</td><td style='color:#22c55e'>+1.09%</td><td>1.6332</td></tr>
+<tr><td>2022-09</td><td style='color:#22c55e'>+17.68%</td><td>1.9220</td></tr>
+<tr><td>2022-10</td><td style='color:#22c55e'>+1.98%</td><td>1.9600</td></tr>
+<tr><td>2022-11</td><td style='color:#22c55e'>+0.08%</td><td>1.9615</td></tr>
+<tr><td>2022-12</td><td style='color:#ef4444'>-0.78%</td><td>1.9461</td></tr>
+<tr><td>2023-01</td><td style='color:#22c55e'>+0.39%</td><td>1.9537</td></tr>
+<tr><td>2023-02</td><td style='color:#ef4444'>-0.64%</td><td>1.9411</td></tr>
+<tr><td>2023-03</td><td style='color:#ef4444'>-0.34%</td><td>1.9346</td></tr>
+<tr><td>2023-04</td><td style='color:#ef4444'>-0.94%</td><td>1.9165</td></tr>
+<tr><td>2023-05</td><td style='color:#22c55e'>+0.06%</td><td>1.9177</td></tr>
+<tr><td>2023-06</td><td style='color:#ef4444'>-0.54%</td><td>1.9073</td></tr>
+<tr><td>2023-07</td><td style='color:#22c55e'>+0.22%</td><td>1.9115</td></tr>
+<tr><td>2023-08</td><td style='color:#22c55e'>+0.37%</td><td>1.9186</td></tr>
+<tr><td>2023-09</td><td style='color:#ef4444'>-0.51%</td><td>1.9089</td></tr>
+<tr><td>2023-10</td><td style='color:#ef4444'>-0.19%</td><td>1.9052</td></tr>
+<tr><td>2023-11</td><td style='color:#ef4444'>-0.06%</td><td>1.9040</td></tr>
+<tr><td>2023-12</td><td style='color:#22c55e'>+0.22%</td><td>1.9082</td></tr>
+<tr><td>2024-01</td><td style='color:#ef4444'>-13.19%</td><td>1.6565</td></tr>
+<tr><td>2024-02</td><td style='color:#22c55e'>+11.94%</td><td>1.8541</td></tr>
+<tr><td>2024-03</td><td style='color:#ef4444'>-1.78%</td><td>1.8211</td></tr>
+<tr><td>2024-04</td><td style='color:#22c55e'>+9.73%</td><td>1.9982</td></tr>
+<tr><td>2024-05</td><td style='color:#ef4444'>-3.70%</td><td>1.9244</td></tr>
+<tr><td>2024-06</td><td style='color:#ef4444'>-4.12%</td><td>1.8451</td></tr>
+<tr><td>2024-07</td><td style='color:#22c55e'>+1.88%</td><td>1.8798</td></tr>
+<tr><td>2024-08</td><td style='color:#22c55e'>+2.44%</td><td>1.9257</td></tr>
+<tr><td>2024-09</td><td style='color:#22c55e'>+16.69%</td><td>2.2471</td></tr>
+<tr><td>2024-10</td><td style='color:#22c55e'>+2.60%</td><td>2.3055</td></tr>
+<tr><td>2024-11</td><td style='color:#ef4444'>-1.68%</td><td>2.2666</td></tr>
+<tr><td>2024-12</td><td style='color:#ef4444'>-4.11%</td><td>2.1735</td></tr>
+<tr><td>2025-01</td><td style='color:#ef4444'>-0.53%</td><td>2.1620</td></tr>
+<tr><td>2025-02</td><td style='color:#22c55e'>+3.85%</td><td>2.2454</td></tr>
+<tr><td>2025-03</td><td style='color:#ef4444'>-1.66%</td><td>2.2082</td></tr>
+<tr><td>2025-04</td><td style='color:#22c55e'>+3.03%</td><td>2.2750</td></tr>
+<tr><td>2025-05</td><td style='color:#22c55e'>+1.66%</td><td>2.3128</td></tr>
+<tr><td>2025-06</td><td style='color:#22c55e'>+6.28%</td><td>2.4582</td></tr>
+<tr><td>2025-07</td><td style='color:#ef4444'>-2.46%</td><td>2.3977</td></tr>
+<tr><td>2025-08</td><td style='color:#ef4444'>-0.28%</td><td>2.3911</td></tr>
+<tr><td>2025-09</td><td style='color:#ef4444'>-4.16%</td><td>2.2916</td></tr>
+<tr><td>2025-10</td><td style='color:#ef4444'>-0.86%</td><td>2.2719</td></tr>
+<tr><td>2025-11</td><td style='color:#ef4444'>-2.60%</td><td>2.2129</td></tr>
+<tr><td>2025-12</td><td style='color:#22c55e'>+0.52%</td><td>2.2245</td></tr>
+
+</table>
+
+<footer>
+  Grid Backtest System · Generated by grid-backtest engine ·
+  数据源: efinance
+</footer>
+
+</body>
+</html>

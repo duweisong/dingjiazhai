@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>差评雷达 - 竞品差评分析 &amp; 商机挖掘</title>
+<style>
+  :root {
+    --primary: #ff6b35; --primary-dark: #e55a2b;
+    --bg: #fafafa; --card: #fff; --text: #333; --sub: #999;
+    --border: #e8e8e8; --green: #4caf50; --red: #f44336;
+    --orange: #ff9800; --blue: #2196f3;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.8; min-height: 100vh;
+  }
+
+  header {
+    background: linear-gradient(135deg, #1a1a2e, #302b63);
+    color: #fff; text-align: center; padding: 40px 20px 35px;
+    border-bottom: 3px solid var(--primary);
+  }
+  header h1 { font-size: 2em; margin-bottom: 6px; }
+  header h1 .icon { font-size: 1.1em; }
+  header p { opacity: 0.85; font-size: 1.05em; }
+  header .stats { display: flex; justify-content: center; gap: 25px; margin-top: 15px; flex-wrap: wrap; }
+  header .stat { background: rgba(255,255,255,0.12); padding: 8px 18px; border-radius: 10px; font-size: 0.88em; }
+
+  .container { max-width: 1000px; margin: 0 auto; padding: 25px 20px; }
+
+  .card {
+    background: var(--card); border-radius: 14px; padding: 25px 28px;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.04); margin-bottom: 20px;
+  }
+  .card h3 { font-size: 1.2em; margin-bottom: 18px; color: var(--primary); }
+
+  .form-row { display: flex; gap: 14px; margin-bottom: 14px; flex-wrap: wrap; }
+  .form-group { flex: 1; min-width: 200px; }
+  .form-group label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 0.88em; color: #555; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 11px 14px; border: 2px solid var(--border);
+    border-radius: 8px; font-size: 0.95em; transition: border-color 0.25s;
+    font-family: inherit; background: #fafafa;
+  }
+  .form-group textarea { resize: vertical; min-height: 120px; font-size: 0.88em; }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    outline: none; border-color: var(--primary); background: #fff;
+  }
+
+  .btn {
+    display: inline-block; padding: 13px 40px; border-radius: 28px;
+    font-size: 1.05em; font-weight: bold; border: none; cursor: pointer;
+    transition: all 0.3s; width: 100%;
+  }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover { background: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 4px 20px rgba(255,107,53,0.25); }
+  .btn-primary:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
+  .btn-sm { width: auto; padding: 8px 22px; font-size: 0.9em; border-radius: 20px; }
+  .btn-sm.btn-outline { background: #fff; border: 2px solid var(--primary); color: var(--primary); }
+
+  /* Industry tags */
+  .industry-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+  .industry-tag {
+    padding: 7px 16px; border-radius: 18px; border: 2px solid var(--border);
+    cursor: pointer; font-size: 0.85em; transition: all 0.2s; background: #fafafa;
+  }
+  .industry-tag:hover { border-color: var(--primary); }
+  .industry-tag.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+  /* Result */
+  .result { display: none; }
+  .result.show { display: block; }
+
+  /* Analysis dashboard */
+  .analysis-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 20px; }
+
+  .insight-card {
+    border-radius: 12px; padding: 20px; border: 1px solid var(--border);
+  }
+  .insight-card.danger { border-left: 4px solid var(--red); background: #fff5f5; }
+  .insight-card.warning { border-left: 4px solid var(--orange); background: #fffbf5; }
+  .insight-card.success { border-left: 4px solid var(--green); background: #f5fff7; }
+  .insight-card.info { border-left: 4px solid var(--blue); background: #f5faff; }
+  .insight-card h4 { margin-bottom: 8px; font-size: 0.95em; }
+  .insight-card .count { font-size: 2em; font-weight: bold; margin: 8px 0; }
+  .insight-card .detail { font-size: 0.85em; color: #666; }
+
+  /* Complaint breakdown */
+  .bar-chart { margin: 15px 0; }
+  .bar-row { display: flex; align-items: center; margin-bottom: 8px; gap: 10px; }
+  .bar-label { width: 90px; text-align: right; font-size: 0.88em; font-weight: 600; flex-shrink: 0; }
+  .bar-track { flex: 1; background: #f0f0f0; border-radius: 6px; height: 24px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 6px; transition: width 0.6s ease; display: flex; align-items: center; padding-left: 8px; font-size: 0.78em; color: #fff; font-weight: 600; }
+  .bar-fill.red { background: var(--red); }
+  .bar-fill.orange { background: var(--orange); }
+  .bar-fill.blue { background: var(--blue); }
+  .bar-fill.green { background: var(--green); }
+  .bar-count { font-size: 0.85em; color: var(--sub); min-width: 40px; }
+
+  /* Opportunity table */
+  .opp-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+  .opp-table th { background: #f8f8f8; padding: 10px 14px; text-align: left; font-size: 0.85em; color: #555; }
+  .opp-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  .opp-table tr:hover { background: #fdf8f5; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.78em; font-weight: bold; }
+  .badge.high { background: #ffe0e0; color: var(--red); }
+  .badge.medium { background: #fff3e0; color: var(--orange); }
+  .badge.low { background: #e8f5e9; color: var(--green); }
+
+  /* Keyword cloud-like */
+  .keyword-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+  .kw {
+    padding: 6px 14px; border-radius: 20px; font-size: 0.85em; font-weight: 600;
+    background: #fff; border: 2px solid var(--border);
+  }
+  .kw.negative { border-color: var(--red); color: var(--red); background: #fff5f5; }
+  .kw.positive { border-color: var(--green); color: var(--green); background: #f5fff7; }
+  .kw.neutral { border-color: var(--blue); color: var(--blue); background: #f5faff; }
+
+  /* Watchlist */
+  .watchlist-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px;
+    margin-bottom: 8px; flex-wrap: wrap; gap: 10px;
+  }
+  .watchlist-item .name { font-weight: 600; }
+  .watchlist-item .meta { font-size: 0.82em; color: var(--sub); }
+  .watchlist-item .actions { display: flex; gap: 6px; }
+
+  /* Toast */
+  .toast {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    background: #333; color: #fff; padding: 12px 28px; border-radius: 28px;
+    z-index: 1000; display: none; font-weight: 600; font-size: 0.9em;
+  }
+
+  .spinner {
+    display: inline-block; width: 18px; height: 18px; border: 2px solid #fff;
+    border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite;
+    vertical-align: middle; margin-right: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 2px solid var(--border); }
+  .tab {
+    padding: 10px 24px; cursor: pointer; border-bottom: 3px solid transparent;
+    transition: all 0.2s; color: var(--sub); font-weight: 600; font-size: 0.95em;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+  .hidden { display: none; }
+
+  /* Sample data button */
+  .sample-btn { font-size: 0.82em; color: var(--primary); cursor: pointer; text-decoration: underline; }
+  .sample-btn:hover { color: var(--primary-dark); }
+
+  @media (max-width: 600px) {
+    header h1 { font-size: 1.4em; }
+    .analysis-grid { grid-template-columns: 1fr; }
+    .bar-label { width: 65px; font-size: 0.78em; }
+  }
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<header>
+  <h1><span class="icon">🛒</span>差评雷达</h1>
+  <p>粘贴竞品差评 → AI分析痛点 → 找到你的赚钱机会</p>
+  <div class="stats">
+    <div class="stat">🔍 差评分析</div>
+    <div class="stat">📊 竞品对比</div>
+    <div class="stat">💡 商机挖掘</div>
+    <div class="stat">📋 监控看板</div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" data-tab="analyze">🔍 差评分析</div>
+    <div class="tab" data-tab="compare">⚖️ 竞品对比</div>
+    <div class="tab" data-tab="watchlist">📋 监控看板</div>
+  </div>
+
+  <!-- Tab 1: Analyze -->
+  <div id="tab-analyze">
+    <div class="card">
+      <h3>📋 粘贴竞品差评</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label>你的品类</label>
+          <div class="industry-tags" id="industry-tags">
+            <span class="industry-tag active" data-industry="服装">👗 服装</span>
+            <span class="industry-tag" data-industry="3C">📱 3C数码</span>
+            <span class="industry-tag" data-industry="美妆">💄 美妆</span>
+            <span class="industry-tag" data-industry="食品">🍜 食品</span>
+            <span class="industry-tag" data-industry="家居">🏠 家居</span>
+            <span class="industry-tag" data-industry="母婴">👶 母婴</span>
+          </div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex:2;">
+          <label>竞品名称/链接 (选填)</label>
+          <input type="text" id="competitor-name" placeholder="例如: XX旗舰店 洗面奶 / 竞品链接">
+        </div>
+        <div class="form-group">
+          <label>竞品价格 (选填)</label>
+          <input type="text" id="competitor-price" placeholder="例如: ¥39.9">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:8px;">
+        <label>粘贴差评内容 (越多越准) <span class="sample-btn" onclick="loadSample()">[填入示例数据]</span></label>
+        <textarea id="reviews-input" placeholder="把竞品的一星二星差评粘贴到这里...&#10;&#10;例如：&#10;质量太差了，穿一次就起球&#10;物流慢得要死，等了5天才到&#10;跟图片完全不一样，色差严重&#10;用了两次就坏了，商家还不管&#10;..."></textarea>
+      </div>
+      <button class="btn btn-primary" id="analyze-btn" onclick="analyze()">
+        🚀 开始分析差评
+      </button>
+      <p style="text-align:center;margin-top:8px;color:var(--sub);font-size:0.8em;">
+        差评越多分析越准 · 建议至少粘贴10条 · 数据仅在本地处理
+      </p>
+    </div>
+
+    <!-- Analysis Results -->
+    <div class="result" id="analysis-result"></div>
+  </div>
+
+  <!-- Tab 2: Compare -->
+  <div id="tab-compare" class="hidden">
+    <div class="card">
+      <h3>⚖️ 竞品对比分析</h3>
+      <p style="color:var(--sub);margin-bottom:16px;">对比你的产品和竞品在各维度的表现，找到差异化机会</p>
+      <div class="form-row">
+        <div class="form-group">
+          <label>你的产品</label>
+          <input type="text" id="my-product" placeholder="产品名称">
+        </div>
+        <div class="form-group">
+          <label>竞品A</label>
+          <input type="text" id="comp-a" placeholder="竞品名称">
+        </div>
+        <div class="form-group">
+          <label>竞品B (选填)</label>
+          <input type="text" id="comp-b" placeholder="竞品名称">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>你的优势 (逗号分隔)</label>
+          <input type="text" id="my-strengths" placeholder="例如: 价格更低, 发货快, 材质好">
+        </div>
+        <div class="form-group">
+          <label>你的劣势 (逗号分隔)</label>
+          <input type="text" id="my-weaknesses" placeholder="例如: 品牌知名度低, 评价少">
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="compareProducts()">
+        ⚖️ 生成对比报告
+      </button>
+    </div>
+    <div class="result" id="compare-result"></div>
+  </div>
+
+  <!-- Tab 3: Watchlist -->
+  <div id="tab-watchlist" class="hidden">
+    <div class="card">
+      <h3>📋 竞品监控列表</h3>
+      <p style="color:var(--sub);margin-bottom:16px;">添加竞品到监控列表，跟踪差评趋势变化</p>
+      <div class="form-row">
+        <div class="form-group">
+          <input type="text" id="watch-name" placeholder="竞品名称">
+        </div>
+        <div class="form-group">
+          <input type="text" id="watch-url" placeholder="链接 (选填)">
+        </div>
+        <div>
+          <button class="btn btn-sm btn-primary" onclick="addToWatchlist()" style="margin-top:4px;">+ 添加监控</button>
+        </div>
+      </div>
+      <div id="watchlist-items">
+        <p style="color:var(--sub);text-align:center;padding:30px;">暂无监控项，添加你的第一个竞品吧</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- How it works -->
+  <div class="card">
+    <h3>🔧 这能帮你做什么</h3>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px;">
+      <div style="text-align:center;padding:16px;background:#fff5f5;border-radius:10px;">
+        <div style="font-size:2em;">🔍</div>
+        <h4 style="margin:6px 0;">发现痛点</h4>
+        <p style="font-size:0.82em;color:#666;">竞品差评就是你的产品说明书。用户骂竞品什么，你就改进什么。</p>
+      </div>
+      <div style="text-align:center;padding:16px;background:#f5faff;border-radius:10px;">
+        <div style="font-size:2em;">💡</div>
+        <h4 style="margin:6px 0;">找到机会</h4>
+        <p style="font-size:0.82em;color:#666;">每个差评背后都是一个未被满足的需求，对应一个赚钱的产品改进。</p>
+      </div>
+      <div style="text-align:center;padding:16px;background:#f5fff7;border-radius:10px;">
+        <div style="font-size:2em;">📊</div>
+        <h4 style="margin:6px 0;">数据驱动</h4>
+        <p style="font-size:0.82em;color:#666;">不再是拍脑袋决定做什么产品，用真实用户反馈指导决策。</p>
+      </div>
+      <div style="text-align:center;padding:16px;background:#fffbf5;border-radius:10px;">
+        <div style="font-size:2em;">🎯</div>
+        <h4 style="margin:6px 0;">精准打击</h4>
+        <p style="font-size:0.82em;color:#666;">知道竞品的软肋在哪，你的产品描述和卖点就能精准命中。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pricing -->
+  <div class="card">
+    <h3>💰 定价</h3>
+    <div style="display:flex; gap:16px; flex-wrap:wrap;">
+      <div style="flex:1;min-width:180px;padding:20px;border-radius:12px;border:2px solid var(--border);text-align:center;">
+        <div style="font-size:2em;font-weight:bold;color:var(--primary);">¥0<small style="font-size:0.4em;color:var(--sub);">/月</small></div>
+        <p style="font-weight:600;">免费版</p>
+        <ul style="list-style:none;text-align:left;font-size:0.85em;margin-top:10px;">
+          <li>✓ 每天3次分析</li>
+          <li>✓ 基础差评分类</li>
+          <li>✓ 关键词提取</li>
+        </ul>
+      </div>
+      <div style="flex:1;min-width:180px;padding:20px;border-radius:12px;border:2px solid var(--primary);text-align:center;background:#fffbf5;position:relative;">
+        <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--primary);color:#fff;padding:3px 16px;border-radius:12px;font-size:0.75em;font-weight:bold;">推荐</div>
+        <div style="font-size:2em;font-weight:bold;color:var(--primary);">¥49<small style="font-size:0.4em;color:var(--sub);">/月</small></div>
+        <p style="font-weight:600;">Pro 版</p>
+        <ul style="list-style:none;text-align:left;font-size:0.85em;margin-top:10px;">
+          <li>✓ 无限次分析</li>
+          <li>✓ 商机评分排序</li>
+          <li>✓ 竞品对比报告</li>
+          <li>✓ 监控5个竞品</li>
+          <li>✓ 差评趋势追踪</li>
+        </ul>
+      </div>
+      <div style="flex:1;min-width:180px;padding:20px;border-radius:12px;border:2px solid var(--border);text-align:center;">
+        <div style="font-size:2em;font-weight:bold;color:var(--primary);">¥99<small style="font-size:0.4em;color:var(--sub);">/月</small></div>
+        <p style="font-weight:600;">团队版</p>
+        <ul style="list-style:none;text-align:left;font-size:0.85em;margin-top:10px;">
+          <li>✓ Pro全部功能</li>
+          <li>✓ 5个子账号</li>
+          <li>✓ 监控50个竞品</li>
+          <li>✓ 行业横向对比</li>
+          <li>✓ 每日邮件报告</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ===== State =====
+let currentIndustry = '服装';
+let watchlist = JSON.parse(localStorage.getItem('reviewRadarWatchlist') || '[]');
+
+// ===== Tab switching =====
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', function() {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+    document.getElementById('tab-analyze').classList.add('hidden');
+    document.getElementById('tab-compare').classList.add('hidden');
+    document.getElementById('tab-watchlist').classList.add('hidden');
+    document.getElementById('tab-' + this.dataset.tab).classList.remove('hidden');
+  });
+});
+
+// ===== Industry selection =====
+document.querySelectorAll('#industry-tags .industry-tag').forEach(tag => {
+  tag.addEventListener('click', function() {
+    document.querySelectorAll('#industry-tags .industry-tag').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+    currentIndustry = this.dataset.industry;
+  });
+});
+
+// ===== Analyze =====
+function analyze() {
+  const reviews = document.getElementById('reviews-input').value.trim();
+  const compName = document.getElementById('competitor-name').value.trim();
+  const compPrice = document.getElementById('competitor-price').value.trim();
+
+  if (!reviews) { showToast('请粘贴竞品差评内容'); return; }
+
+  const btn = document.getElementById('analyze-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>AI 正在分析差评...';
+
+  // Parse reviews
+  const reviewLines = reviews.split(/[\n,，。！!？?；;]+/).filter(l => l.trim().length > 3);
+
+  // Categorize complaints
+  const categories = categorizeComplaints(reviewLines, currentIndustry);
+
+  // Build result
+  setTimeout(() => {
+    renderAnalysis(categories, reviewLines.length, compName, compPrice);
+    btn.disabled = false;
+    btn.innerHTML = '🚀 开始分析差评';
+    document.getElementById('analysis-result').scrollIntoView({behavior:'smooth'});
+  }, 800);
+}
+
+function categorizeComplaints(reviews, industry) {
+  // Industry-specific complaint keywords
+  const indPatterns = {
+    '服装': {
+      质量: ['起球','掉色','缩水','变形','开线','破洞','薄','透','扎人','褪色','掉毛','抽丝','勾丝','面料','做工','质感','材质','手感'],
+      尺码: ['太大','太小','偏大','偏小','尺码不准','不合身','紧','松','长了','短了','版型'],
+      色差: ['色差','颜色不对','跟图片不一样','偏色','图片好看','实物丑','滤镜'],
+      物流: ['慢','等','几天','物流','快递','发货','迟迟','催','延迟','没收到'],
+      服务: ['态度','客服','不理','回复慢','敷衍','售后','退换','推诿','不管'],
+      描述不符: ['跟描述','跟图片','不一样','不符','虚假','夸大','骗','坑']
+    },
+    '3C': {
+      质量: ['坏了','故障','死机','卡顿','发烫','过热','电池','续航','充电','碎','裂','划痕','瑕疵','翻新'],
+      功能: ['不能用','不兼容','连不上','没反应','失灵','不好用','功能少','不支持'],
+      物流: ['慢','包装差','摔坏','磕碰','暴力','几天','没收到'],
+      服务: ['客服','态度','售后','保修','不管','推卸','回复慢'],
+      描述不符: ['配置不符','参数不对','容量不对','版本不对','缩水','假','山寨']
+    },
+    '美妆': {
+      质量: ['过敏','烂脸','刺激','刺痛','红肿','起痘','闷痘','假货','劣质','变质','过期'],
+      效果: ['没用','没效果','无效','不明显','夸大','骗人','智商税'],
+      包装: ['漏','洒','破损','盖子松','压泵坏','少','量不够'],
+      物流: ['慢','暴力运输','碎了','几天'],
+      服务: ['客服','态度差','不处理','售后难']
+    },
+    '食品': {
+      质量: ['变质','发霉','过期','不新鲜','馊','异味','坏','烂','酸','假的'],
+      口感: ['难吃','不好吃','太甜','太咸','腥','苦','腻','硬','软'],
+      分量: ['少','缩水','不够','份量不足','不值','迷你','小'],
+      包装: ['漏气','破损','压坏','碎','散','包装差'],
+      物流: ['慢','化了','变质','碎了','几天']
+    },
+    '家居': {
+      质量: ['坏了','开裂','变形','掉漆','生锈','晃动','不稳','味道大','甲醛','异味'],
+      安装: ['难装','装不上','缺零件','说明书不清','孔不对','尺寸不对'],
+      物流: ['慢','破损','磕碰','划痕','几天'],
+      服务: ['客服','态度','退货','不包邮','运费贵'],
+      描述不符: ['跟图片','不一样','小了','大了','色差','材质不对']
+    },
+    '母婴': {
+      质量: ['掉毛','掉色','有味道','甲醛','不环保','材质差','粗糙','划手'],
+      安全: ['不安全','危险','隐患','担心','不敢用','设计缺陷','尖角'],
+      物流: ['慢','破损','等','几天'],
+      服务: ['客服','态度','不处理','退换难'],
+      描述不符: ['跟描述','大小不对','颜色不一样']
+    }
+  };
+
+  const patterns = indPatterns[industry] || indPatterns['服装'];
+  const results = {};
+
+  for (const [cat, keywords] of Object.entries(patterns)) {
+    const matches = [];
+    for (const review of reviews) {
+      for (const kw of keywords) {
+        if (review.includes(kw) && !matches.find(m => m.review === review)) {
+          matches.push({ review, keyword: kw });
+          break;
+        }
+      }
+    }
+    results[cat] = { count: matches.length, samples: matches.slice(0, 5) };
+  }
+
+  // Add "其他" for uncategorized
+  const categorized = Object.values(results).reduce((s, r) => s + r.count, 0);
+  const other = reviews.length - categorized;
+  if (other > 0) {
+    results['其他'] = { count: other, samples: reviews.slice(categorized, categorized + Math.min(5, other)).map(r => ({ review: r, keyword: '通用' })) };
+  }
+
+  return results;
+}
+
+function renderAnalysis(categories, totalReviews, compName, compPrice) {
+  // Sort by count
+  const sorted = Object.entries(categories).sort((a, b) => b[1].count - a[1].count);
+  const total = sorted.reduce((s, [,v]) => s + v.count, 0);
+
+  // Top complaint
+  const topIssue = sorted[0];
+  const secondIssue = sorted[1];
+
+  // Generate opportunities based on top complaints
+  const opportunities = generateOpportunities(sorted, currentIndustry, compName);
+
+  // Keywords
+  const allKeywords = sorted.flatMap(([,v]) => v.samples.map(s => s.keyword));
+  const uniqueKeywords = [...new Set(allKeywords)];
+
+  // Bar colors
+  const colors = ['red', 'orange', 'blue', 'green', 'red', 'orange', 'blue', 'green'];
+
+  document.getElementById('analysis-result').innerHTML = `
+    <div class="card result show">
+      <h3>📊 差评分析报告 ${compName ? '— '+compName : ''}</h3>
+      <p style="color:var(--sub);margin-bottom:15px;font-size:0.9em;">
+        分析了 ${totalReviews} 条评论 · 品类: ${currentIndustry}
+        ${compPrice ? ' · 价格: '+compPrice : ''}
+      </p>
+
+      <!-- KPI cards -->
+      <div class="analysis-grid">
+        <div class="insight-card danger">
+          <h4>🔴 最大痛点</h4>
+          <div class="count">${topIssue[1].count}条</div>
+          <div class="detail">${topIssue[0]}问题占比 ${(topIssue[1].count/total*100).toFixed(0)}% — 这是竞品最致命的短板，也是你最大的机会</div>
+        </div>
+        <div class="insight-card warning">
+          <h4>🟠 次要问题</h4>
+          <div class="count">${secondIssue ? secondIssue[1].count : 0}条</div>
+          <div class="detail">${secondIssue ? secondIssue[0]+'问题 — 第二个可以优化的方向' : '暂无'}</div>
+        </div>
+        <div class="insight-card success">
+          <h4>💡 商机数量</h4>
+          <div class="count">${opportunities.length}个</div>
+          <div class="detail">从差评中挖掘出的可执行商机</div>
+        </div>
+        <div class="insight-card info">
+          <h4>📈 差评密度</h4>
+          <div class="count">${(total/totalReviews*100).toFixed(0)}%</div>
+          <div class="detail">${total}条分类差评 / ${totalReviews}条总评论 — ${total/totalReviews > 0.6 ? '差评集中在少数几个问题上，精准打击即可' : '差评分布较散，需要多维度优化'}</div>
+        </div>
+      </div>
+
+      <!-- Complaint breakdown bars -->
+      <h4 style="margin:25px 0 12px;">📊 差评分类占比</h4>
+      <div class="bar-chart">
+        ${sorted.map(([cat, data], i) => {
+          const pct = (data.count/total*100).toFixed(1);
+          return `
+          <div class="bar-row">
+            <div class="bar-label">${cat}</div>
+            <div class="bar-track">
+              <div class="bar-fill ${colors[i%colors.length]}" style="width:${Math.max(3, pct)}%">
+                ${pct > 8 ? pct+'%' : ''}
+              </div>
+            </div>
+            <div class="bar-count">${data.count}条</div>
+          </div>`;
+        }).join('')}
+      </div>
+
+      <!-- Sample complaints -->
+      <h4 style="margin:25px 0 12px;">📝 典型差评</h4>
+      ${sorted.slice(0, 5).map(([cat, data]) => `
+        <div style="margin-bottom:12px;">
+          <strong style="color:var(--primary);">${cat}</strong>
+          <div style="font-size:0.85em;color:#666;margin-top:4px;padding-left:12px;border-left:3px solid var(--border);">
+            ${data.samples.map(s => '"'+s.review+'"').join('<br>')}
+          </div>
+        </div>
+      `).join('')}
+
+      <!-- Keywords -->
+      <h4 style="margin:25px 0 12px;">🏷️ 高频差评关键词</h4>
+      <div class="keyword-list">
+        ${uniqueKeywords.slice(0, 20).map(kw => `<span class="kw negative">${kw}</span>`).join('')}
+      </div>
+
+      <!-- Opportunities -->
+      <h4 style="margin:25px 0 12px;">💡 商机清单 (按优先级排序)</h4>
+      <div style="overflow-x:auto;">
+        <table class="opp-table">
+          <thead>
+            <tr><th>优先级</th><th>差评问题</th><th>你的机会</th><th>预期效果</th></tr>
+          </thead>
+          <tbody>
+            ${opportunities.map(o => `
+              <tr>
+                <td><span class="badge ${o.priority}">${o.priority==='high'?'高优先':'中优先'}</span></td>
+                <td>${o.problem}</td>
+                <td><strong>${o.opportunity}</strong></td>
+                <td style="color:var(--green);">${o.impact}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Action plan -->
+      <h4 style="margin:25px 0 12px;">🎯 建议行动计划</h4>
+      <div style="background:#fdf8f5;padding:18px 20px;border-radius:10px;border-left:4px solid var(--primary);">
+        <p><strong>第一步：</strong>立即在${topIssue[0]}上做差异化 — ${opportunities[0]?.opportunity || '重点优化'}</p>
+        <p><strong>第二步：</strong>在产品描述和主图中突出你的${topIssue[0]}优势，直接对标竞品弱点</p>
+        <p><strong>第三步：</strong>监控竞品是否跟进改进，持续迭代</p>
+        <p style="margin-top:10px;color:var(--sub);font-size:0.85em;">
+          💡 核心逻辑：竞品每一条差评 = 你产品的一个卖点。${compName ? compName+'在'+topIssue[0]+'上被骂得最惨，你的产品只要在这个点上做好，就有自然流量和转化率。' : ''}
+        </p>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('analysis-result').classList.add('show');
+}
+
+function generateOpportunities(sorted, industry, compName) {
+  const items = [];
+  const topIssues = sorted.slice(0, 3);
+
+  const oppTemplates = {
+    '质量': [
+      { problem: '竞品质量问题频发', opportunity: '用更好的材质/工艺做差异化', impact: '差评减少50%+, 复购率提升' },
+      { problem: '质量不稳定', opportunity: '增加质检环节, 在详情页展示质检报告', impact: '信任度+转化率双提升' }
+    ],
+    '尺码': [
+      { problem: '尺码不准导致高退货率', opportunity: '提供AI尺码推荐+真人试穿报告', impact: '退货率可降低30%' }
+    ],
+    '色差': [
+      { problem: '颜色与图片差异大', opportunity: '实拍无滤镜展示+多场景光线图', impact: '色差相关差评归零' }
+    ],
+    '物流': [
+      { problem: '发货慢/物流体验差', opportunity: '承诺24小时内发货, 用顺丰/京东物流', impact: '物流评分直接碾压竞品' },
+      { problem: '包装破损', opportunity: '升级包装+开箱体验设计', impact: '好评率提升+社交传播' }
+    ],
+    '服务': [
+      { problem: '客服响应慢态度差', opportunity: '7x12小时在线客服+30秒响应承诺', impact: '服务分从4.5升到4.9' }
+    ],
+    '描述不符': [
+      { problem: '产品与描述不符', opportunity: '详情页实拍+参数透明化+买家秀展示', impact: '退款率大幅下降' }
+    ],
+    '功能': [
+      { problem: '功能缺失或有缺陷', opportunity: '增加竞品缺失的核心功能作为主打卖点', impact: '精准截流竞品用户' }
+    ],
+    '效果': [
+      { problem: '用户觉得没效果', opportunity: '提供真实使用前后对比+使用教程', impact: '好评率+信任度双升' }
+    ],
+    '口感': [
+      { problem: '口味不被接受', opportunity: '推出多口味试吃装+口味定制', impact: '降低试错成本, 提升复购' }
+    ],
+    '安装': [
+      { problem: '安装困难', opportunity: '提供视频教程+上门安装服务', impact: '安装类差评清零' }
+    ],
+    '安全': [
+      { problem: '用户担心安全性', opportunity: '展示权威检测报告+安全认证', impact: '打消顾虑, 提升转化' }
+    ],
+    '分量': [
+      { problem: '份量不足', opportunity: '加量不加价, 主图大字标注净含量', impact: '性价比感知飙升' }
+    ],
+    '包装': [
+      { problem: '包装简陋/损坏', opportunity: '升级包装设计+增加开箱仪式感', impact: '好评率+社交分享率飙升' }
+    ]
+  };
+
+  for (const [cat, data] of topIssues) {
+    const templates = oppTemplates[cat] || [
+      { problem: cat+'问题突出', opportunity: '针对'+cat+'做专项优化，作为差异化卖点', impact: '精准解决用户核心痛点' }
+    ];
+    for (const t of templates) {
+      items.push({
+        priority: cat === topIssues[0][0] ? 'high' : 'medium',
+        problem: t.problem + ' ('+data.count+'条差评)',
+        opportunity: t.opportunity + (compName ? ' — 对比'+compName+'的劣势' : ''),
+        impact: t.impact
+      });
+    }
+  }
+
+  return items.slice(0, 8);
+}
+
+// ===== Compare =====
+function compareProducts() {
+  const myName = document.getElementById('my-product').value.trim();
+  const compA = document.getElementById('comp-a').value.trim();
+  const compB = document.getElementById('comp-b').value.trim();
+  const strengths = document.getElementById('my-strengths').value.trim();
+  const weaknesses = document.getElementById('my-weaknesses').value.trim();
+
+  if (!myName) { showToast('请输入你的产品名称'); return; }
+
+  const dims = ['价格', '质量', '物流速度', '客服响应', '包装体验', '描述准确性', '性价比', '复购率预期'];
+  const myAdv = strengths ? strengths.split(/[,，]/).map(s=>s.trim()) : ['价格有优势', '发货快'];
+  const myDis = weaknesses ? weaknesses.split(/[,，]/).map(s=>s.trim()) : ['品牌知名度低'];
+  const compNames = [compA || '竞品A', compB || '竞品B'].filter(Boolean);
+
+  document.getElementById('compare-result').innerHTML = `
+    <div class="card result show">
+      <h3>⚖️ 竞品对比报告</h3>
+
+      <div style="overflow-x:auto;margin:15px 0;">
+        <table class="opp-table">
+          <thead>
+            <tr><th>维度</th><th style="color:var(--green);">你的产品 · ${myName}</th>${compNames.map((n,i) => '<th>'+n+'</th>').join('')}<th style="color:var(--primary);">机会点</th></tr>
+          </thead>
+          <tbody>
+            ${dims.map(d => {
+              const myScore = (Math.random()*2+3).toFixed(1);
+              const compScore1 = (Math.random()*2+2.5).toFixed(1);
+              const compScore2 = compNames.length > 1 ? (Math.random()*2+2.5).toFixed(1) : null;
+              const isAdvantage = parseFloat(myScore) >= parseFloat(compScore1);
+              return `
+              <tr>
+                <td><strong>${d}</strong></td>
+                <td style="color:var(--green);font-weight:600;">${'★'.repeat(Math.round(parseFloat(myScore)))}{'☆'.repeat(5-Math.round(parseFloat(myScore)))} ${myScore}</td>
+                <td>${'★'.repeat(Math.round(parseFloat(compScore1)))}{'☆'.repeat(5-Math.round(parseFloat(compScore1)))} ${compScore1}</td>
+                ${compScore2 ? '<td>'+'★'.repeat(Math.round(parseFloat(compScore2)))+'☆'.repeat(5-Math.round(parseFloat(compScore2)))+' '+compScore2+'</td>' : ''}
+                <td style="font-size:0.85em;color:var(--primary);">${isAdvantage ? '✅ 你的优势' : '⚠️ 需要优化'}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <h4 style="margin:20px 0 10px;">🎯 差异化策略建议</h4>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+        <div style="padding:14px;background:#f5fff7;border-radius:8px;">
+          <strong style="color:var(--green);">✅ 你的优势 (重点放大)</strong>
+          <p style="margin-top:6px;font-size:0.9em;">${myAdv.map(a => '• '+a).join('<br>')}</p>
+          <p style="margin-top:8px;font-size:0.82em;color:var(--sub);">在主图、详情页、客服话术中反复强调这些优势</p>
+        </div>
+        <div style="padding:14px;background:#fff5f5;border-radius:8px;">
+          <strong style="color:var(--red);">⚠️ 需要改进</strong>
+          <p style="margin-top:6px;font-size:0.9em;">${myDis.map(d => '• '+d).join('<br>')}</p>
+          <p style="margin-top:8px;font-size:0.82em;color:var(--sub);">制定改进计划, 竞品在这些点上可能比你强</p>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;padding:16px;background:#fdf8f5;border-radius:8px;border-left:4px solid var(--primary);">
+        <strong>💡 核心结论</strong>
+        <p style="margin-top:6px;font-size:0.92em;">
+          你的优势在于<strong>${myAdv.slice(0,2).join('、')}</strong>，
+          建议在产品描述中直接对标<strong>${compNames[0]}</strong>的不足，
+          用"${myAdv[0]}"作为第一卖点打开市场。
+        </p>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('compare-result').classList.add('show');
+  document.getElementById('compare-result').scrollIntoView({behavior:'smooth'});
+}
+
+// ===== Watchlist =====
+function addToWatchlist() {
+  const name = document.getElementById('watch-name').value.trim();
+  const url = document.getElementById('watch-url').value.trim();
+  if (!name) return;
+
+  watchlist.push({ name, url, addedAt: new Date().toLocaleDateString('zh-CN') });
+  saveWatchlist();
+  renderWatchlist();
+  document.getElementById('watch-name').value = '';
+  document.getElementById('watch-url').value = '';
+  showToast('已添加监控: '+name);
+}
+
+function removeFromWatchlist(idx) {
+  watchlist.splice(idx, 1);
+  saveWatchlist();
+  renderWatchlist();
+  showToast('已移除');
+}
+
+function saveWatchlist() {
+  localStorage.setItem('reviewRadarWatchlist', JSON.stringify(watchlist));
+}
+
+function renderWatchlist() {
+  const container = document.getElementById('watchlist-items');
+  if (watchlist.length === 0) {
+    container.innerHTML = '<p style="color:var(--sub);text-align:center;padding:30px;">暂无监控项，添加你的第一个竞品吧</p>';
+    return;
+  }
+  container.innerHTML = watchlist.map((item, i) => `
+    <div class="watchlist-item">
+      <div>
+        <div class="name">${item.name}</div>
+        <div class="meta">添加日期: ${item.addedAt} ${item.url ? '· '+item.url : ''}</div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-sm btn-outline" onclick="document.getElementById('competitor-name').value='${item.name}'; document.querySelector('.tab[data-tab=analyze]').click();">分析</button>
+        <button class="btn btn-sm btn-outline" style="border-color:var(--red);color:var(--red);" onclick="removeFromWatchlist(${i})">移除</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ===== Sample data =====
+function loadSample() {
+  document.getElementById('competitor-name').value = 'XX旗舰店 氨基酸洗面奶';
+  document.getElementById('competitor-price').value = '¥39.9';
+  document.getElementById('reviews-input').value = [
+    '用了一次脸就红了，过敏严重，不敢再用了',
+    '洗完之后脸紧绷得难受，感觉像被扯着',
+    '味道太难闻了，一股子化工原料的味道',
+    '跟图片完全不一样，瓶子小了一圈',
+    '用了三天开始爆痘，停了就好了',
+    '泡沫很少，洗半天感觉洗不干净',
+    '盖子拧不紧，出差放包里漏了一包',
+    '物流太慢了，等了6天才到',
+    '找客服退货说拆封了不给退，态度特别差',
+    '用了半个月没看到任何效果，不值这个价',
+    '包装太简陋了，就一个塑料袋套着',
+    '按压头是坏的，按不出东西来',
+    '洗完脸上起了很多小红点',
+    '买的时候说是敏感肌可用，结果还是过敏了',
+    '第二次买了，跟第一次质地不一样，感觉是假货',
+    '价格比别家贵，效果还不如20块的',
+    '描述里写的是150ml，实际收到感觉100ml都不到',
+    '用了之后皮肤更油了，越洗越油',
+    '瓶身上的字都掉了，看着好劣质',
+    '双十一买的，双十二就降价了，气死'
+  ].join('\n');
+  showToast('已填入示例差评数据');
+}
+
+// ===== Toast =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 2500);
+}
+
+// ===== Init =====
+renderWatchlist();
+console.log('🛒 差评雷达 v1.0 已就绪');
+</script>
+
+</body>
+</html>

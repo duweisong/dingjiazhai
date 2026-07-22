@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>网格回测 · Bento Dashboard 草图</title>
+
+<script
+  src="https://registry.npmmirror.com/react/18.3.1/files/umd/react.development.js"
+  integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L"
+  crossorigin="anonymous"
+></script>
+<script
+  src="https://registry.npmmirror.com/react-dom/18.3.1/files/umd/react-dom.development.js"
+  integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm"
+  crossorigin="anonymous"
+></script>
+<script
+  src="https://registry.npmmirror.com/@babel/standalone/7.29.0/files/babel.min.js"
+  integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y"
+  crossorigin="anonymous"
+></script>
+
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{font-size:16px}
+  body{
+    background:oklch(96% 0.005 255);
+    color:oklch(25% 0 0);
+    font-family:ui-sans-serif,system-ui,-apple-system,sans-serif;
+  }
+
+  /* ===== Layout Shell ===== */
+  .app-shell{
+    display:grid;
+    grid-template-columns:360px 1fr;
+    grid-template-rows:56px 1fr;
+    height:100vh;
+    overflow:hidden;
+  }
+  .topbar{
+    grid-column:1/-1;
+    display:flex;align-items:center;gap:16px;
+    padding:0 24px;
+    background:white;
+    border-bottom:1px solid oklch(92% 0 0);
+    z-index:10;
+  }
+  .topbar-logo{font-size:15px;font-weight:700;letter-spacing:-0.02em;color:oklch(20% 0 0)}
+  .topbar-dot{width:7px;height:7px;border-radius:50%;background:oklch(60% 0.2 170);margin-left:-4px}
+  .topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .topbar-chip{
+    font-size:11px;padding:4px 10px;border-radius:20px;
+    background:oklch(95% 0.01 255);color:oklch(45% 0 0);
+  }
+
+  /* ===== Sidebar ===== */
+  .sidebar{
+    background:white;
+    border-right:1px solid oklch(92% 0 0);
+    padding:20px;
+    display:flex;flex-direction:column;gap:16px;
+    overflow-y:auto;
+  }
+  .sidebar-section{display:flex;flex-direction:column;gap:6px}
+  .sidebar-label{
+    font-size:10px;font-weight:600;text-transform:uppercase;
+    letter-spacing:0.05em;color:oklch(50% 0 0);
+  }
+  .input-row{display:flex;align-items:center;gap:8px}
+  .input-tag{
+    font-size:11px;color:oklch(45% 0 0);min-width:32px;
+  }
+  input[type=range]{
+    flex:1;height:4px;-webkit-appearance:none;
+    background:oklch(90% 0 0);border-radius:2px;outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:16px;height:16px;border-radius:50%;
+    background:oklch(55% 0.18 250);cursor:pointer;border:2px solid white;
+    box-shadow:0 1px 3px oklch(0% 0 0/0.15);
+  }
+  .input-val{
+    font-size:11px;font-weight:600;color:oklch(30% 0 0);
+    min-width:36px;text-align:right;font-variant-numeric:tabular-nums;
+  }
+  .btn{
+    width:100%;padding:10px 0;border:none;border-radius:8px;
+    font-size:13px;font-weight:600;cursor:pointer;
+    transition:transform 0.1s,box-shadow 0.1s;
+  }
+  .btn:active{transform:scale(0.98)}
+  .btn-primary{
+    background:oklch(55% 0.18 250);color:white;
+    box-shadow:0 2px 8px oklch(55% 0.18 250/0.3);
+  }
+  .btn-primary:hover{box-shadow:0 4px 16px oklch(55% 0.18 250/0.4)}
+  .btn-secondary{
+    background:oklch(95% 0.005 255);color:oklch(40% 0 0);
+    border:1px solid oklch(90% 0 0);
+  }
+
+  /* ===== Main ===== */
+  .main{
+    padding:20px 24px;
+    overflow-y:auto;
+    display:flex;flex-direction:column;gap:14px;
+  }
+  .main-label{
+    font-size:11px;font-weight:600;color:oklch(50% 0 0);
+    letter-spacing:0.04em;text-transform:uppercase;
+  }
+
+  /* KPI row */
+  .kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+  .kpi-card{
+    background:white;border-radius:12px;padding:16px;
+    display:flex;flex-direction:column;gap:4px;
+    border:1px solid oklch(93% 0 0);
+    position:relative;overflow:hidden;
+  }
+  .kpi-card::before{
+    content:"";position:absolute;top:0;left:0;right:0;height:3px;
+  }
+  .kpi-card.accent-green::before{background:oklch(65% 0.2 170)}
+  .kpi-card.accent-blue::before{background:oklch(60% 0.18 250)}
+  .kpi-card.accent-red::before{background:oklch(55% 0.22 20)}
+  .kpi-card.accent-amber::before{background:oklch(70% 0.15 80)}
+  .kpi-label{font-size:10px;color:oklch(55% 0 0);text-transform:uppercase;letter-spacing:0.05em}
+  .kpi-value{font-size:26px;font-weight:700;letter-spacing:-0.03em;color:oklch(20% 0 0)}
+  .kpi-sub{font-size:10px;color:oklch(55% 0 0)}
+
+  /* Bento bottom row */
+  .bento-bottom{display:grid;grid-template-columns:3fr 2fr;gap:12px;flex:1;min-height:0}
+  .bento-card{
+    background:white;border-radius:12px;padding:16px;
+    border:1px solid oklch(93% 0 0);
+    display:flex;flex-direction:column;gap:8px;
+    overflow:hidden;
+  }
+  .bento-card-title{
+    font-size:11px;font-weight:600;color:oklch(40% 0 0);
+    letter-spacing:0.03em;
+  }
+
+  /* Chart placeholder */
+  .chart-placeholder{
+    flex:1;background:oklch(98% 0.002 255);
+    border-radius:8px;position:relative;overflow:hidden;
+    min-height:180px;
+  }
+  .chart-placeholder svg{width:100%;height:100%;position:absolute;top:0;left:0}
+
+  /* Trade table */
+  .trade-row{
+    display:grid;grid-template-columns:1fr 60px 64px 64px 1fr;
+    gap:8px;padding:6px 0;border-bottom:1px solid oklch(95% 0 0);
+    font-size:11px;align-items:center;
+  }
+  .trade-row.header{font-size:10px;color:oklch(50% 0 0);font-weight:600;letter-spacing:0.03em;text-transform:uppercase}
+  .trade-date{color:oklch(45% 0 0)}
+  .trade-action{font-weight:600}
+  .trade-action.buy{color:oklch(55% 0.18 170)}
+  .trade-action.sell{color:oklch(45% 0.22 20)}
+  .trade-price{text-align:right;font-variant-numeric:tabular-nums}
+  .trade-shares{text-align:right;font-variant-numeric:tabular-nums;color:oklch(50% 0 0)}
+  .trade-reason{color:oklch(55% 0 0)}
+
+  /* Stock selector */
+  .stock-select{
+    display:flex;align-items:center;gap:6px;
+    padding:6px 12px;border-radius:8px;
+    background:oklch(95% 0.005 255);
+    border:1px solid oklch(90% 0 0);
+    font-size:12px;color:oklch(35% 0 0);cursor:pointer;
+  }
+  .stock-select:hover{border-color:oklch(75% 0.05 250)}
+  .stock-code{font-weight:600;font-variant-numeric:tabular-nums}
+  .stock-name{color:oklch(55% 0 0)}
+
+  /* Responsive */
+  @media(max-width:900px){
+    .app-shell{grid-template-columns:1fr}
+    .sidebar{display:none}
+    .kpi-row{grid-template-columns:repeat(2,1fr)}
+    .bento-bottom{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+
+// =====================================================
+// Sketch Layout — Bento Dashboard
+// =====================================================
+
+function SketchApp() {
+  const [gridPeriod, setGridPeriod] = React.useState(240);
+  const [gridLevels, setGridLevels] = React.useState(11);
+  const [gridStep, setGridStep] = React.useState(0.5);
+
+  const kpis = [
+    { label:"总收益", value:"+47.2%", sub:"2020-2025 · 年化 +8.1%", accent:"accent-green" },
+    { label:"夏普比率", value:"1.62", sub:"无风险利率 3%", accent:"accent-blue" },
+    { label:"最大回撤", value:"-12.3%", sub:"持续期 67 天", accent:"accent-red" },
+    { label:"胜率", value:"56.1%", sub:"195 赢 / 152 亏 / 347 笔", accent:"accent-amber" },
+    { label:"最终资金", value:"¥147,200", sub:"初始 ¥100,000", accent:"" },
+  ];
+
+  const trades = [
+    ["2025-12-30","SELL","12.45","2,400","止盈"],
+    ["2025-12-18","BUY","11.82","2,400","网格触发"],
+    ["2025-12-05","SELL","12.10","2,300","网格触发"],
+    ["2025-11-22","BUY","11.48","2,300","网格触发"],
+    ["2025-11-10","SELL","11.90","2,200","网格触发"],
+    ["2025-10-28","BUY","11.32","2,200","网格触发"],
+  ];
+
+  return (
+    <div className="app-shell">
+
+      {/* ===== Top Bar ===== */}
+      <div className="topbar">
+        <span className="topbar-logo">网格回测</span>
+        <span className="topbar-dot" />
+        <div className="stock-select">
+          <span className="stock-code">002036</span>
+          <span className="stock-name">联创电子</span>
+          <span style={{color:"oklch(65% 0 0)",fontSize:10}}>▾</span>
+        </div>
+        <div className="topbar-right">
+          <span className="topbar-chip">SZ · 深圳</span>
+          <span className="topbar-chip" style={{color:"oklch(55% 0.18 170)"}}>● 就绪</span>
+        </div>
+      </div>
+
+      {/* ===== Sidebar ===== */}
+      <div className="sidebar">
+        <div style={{fontSize:12,fontWeight:600,color:"oklch(35% 0 0)"}}>策略参数</div>
+
+        <div className="sidebar-section">
+          <span className="sidebar-label">日期范围</span>
+          <div style={{fontSize:12,color:"oklch(40% 0 0)"}}>2020-01-01 — 2025-12-31</div>
+        </div>
+
+        <div className="sidebar-section">
+          <span className="sidebar-label">回溯周期</span>
+          <div className="input-row">
+            <input type="range" min="60" max="720" step="20" value={gridPeriod}
+              onChange={e=>setGridPeriod(Number(e.target.value))} />
+            <span className="input-val">{gridPeriod} 日</span>
+          </div>
+        </div>
+
+        <div className="sidebar-section">
+          <span className="sidebar-label">网格档位</span>
+          <div className="input-row">
+            <input type="range" min="5" max="21" step="2" value={gridLevels}
+              onChange={e=>setGridLevels(Number(e.target.value))} />
+            <span className="input-val">{gridLevels} 档</span>
+          </div>
+        </div>
+
+        <div className="sidebar-section">
+          <span className="sidebar-label">每档步长</span>
+          <div className="input-row">
+            <input type="range" min="0.1" max="3" step="0.1" value={gridStep}
+              onChange={e=>setGridStep(Number(e.target.value))} />
+            <span className="input-val">{gridStep.toFixed(1)}%</span>
+          </div>
+        </div>
+
+        <div className="sidebar-section" style={{marginTop:8}}>
+          <label style={{display:"flex",alignItems:"center",gap:6,fontSize:11,color:"oklch(45% 0 0)",cursor:"pointer"}}>
+            <input type="checkbox" style={{accentColor:"oklch(55% 0.18 250)"}} />
+            启用 MA60 闸门
+          </label>
+        </div>
+
+        <div style={{display:"flex",flexDirection:"column",gap:8,marginTop:"auto"}}>
+          <button className="btn btn-primary">▶ 运行回测</button>
+          <button className="btn btn-secondary">🔍 参数扫描</button>
+          <button className="btn btn-secondary">📊 标的池扫描</button>
+        </div>
+      </div>
+
+      {/* ===== Main ===== */}
+      <div className="main">
+        <span className="main-label">回测结果</span>
+
+        {/* KPI row */}
+        <div className="kpi-row">
+          {kpis.map(k => (
+            <div key={k.label} className={`kpi-card ${k.accent}`}>
+              <span className="kpi-label">{k.label}</span>
+              <span className="kpi-value">{k.value}</span>
+              <span className="kpi-sub">{k.sub}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Bottom row: chart + trade log */}
+        <div className="bento-bottom">
+          {/* Chart */}
+          <div className="bento-card">
+            <span className="bento-card-title">权益曲线 · 回撤</span>
+            <div className="chart-placeholder">
+              <svg viewBox="0 0 600 200" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="equityGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="oklch(60% 0.18 250 / 0.12)"/>
+                    <stop offset="100%" stopColor="oklch(60% 0.18 250 / 0.01)"/>
+                  </linearGradient>
+                </defs>
+                {/* Grid lines */}
+                {[0,1,2,3].map(i => (
+                  <line key={i} x1="0" y1={50+i*40} x2="600" y2={50+i*40}
+                    stroke="oklch(90% 0 0)" strokeWidth="1" />
+                ))}
+                {/* Baseline */}
+                <line x1="0" y1="170" x2="600" y2="170"
+                  stroke="oklch(85% 0 0)" strokeWidth="1" strokeDasharray="4,4" />
+                {/* Equity line */}
+                <path d="M0,190 Q40,185 80,180 Q120,175 160,172 Q200,168 240,155 Q280,140 320,135 Q360,130 400,118 Q440,105 480,95 Q520,82 560,72 Q590,65 600,62"
+                  fill="none" stroke="oklch(58% 0.18 250)" strokeWidth="2.5" strokeLinecap="round"/>
+                {/* Area */}
+                <path d="M0,190 Q40,185 80,180 Q120,175 160,172 Q200,168 240,155 Q280,140 320,135 Q360,130 400,118 Q440,105 480,95 Q520,82 560,72 Q590,65 600,62 L600,210 L0,210 Z"
+                  fill="url(#equityGrad)"/>
+                {/* Drawdown area */}
+                <path d="M0,200 Q200,195 400,198 Q500,199 600,197"
+                  fill="oklch(45% 0.22 20 / 0.08)" stroke="oklch(50% 0.2 20 / 0.4)" strokeWidth="1" />
+                {/* Labels */}
+                <text x="4" y="14" fill="oklch(55% 0 0)" fontSize="9" fontFamily="system-ui">权益 (元)</text>
+                <text x="540" y="196" fill="oklch(50% 0.2 20)" fontSize="8" fontFamily="system-ui">回撤 -12.3%</text>
+              </svg>
+            </div>
+            <div style={{display:"flex",gap:16,fontSize:10,color:"oklch(50% 0 0)"}}>
+              <span>基准收益 <strong style={{color:"oklch(25% 0 0)"}}>+15.6%</strong></span>
+              <span>卡尔玛 <strong style={{color:"oklch(25% 0 0)"}}>0.66</strong></span>
+              <span>最终资金 <strong style={{color:"oklch(25% 0 0)"}}>¥147,200</strong></span>
+            </div>
+          </div>
+
+          {/* Trade log */}
+          <div className="bento-card">
+            <span className="bento-card-title">最近交易</span>
+            <div className="trade-row header">
+              <span>日期</span><span>方向</span>
+              <span style={{textAlign:"right"}}>价格</span>
+              <span style={{textAlign:"right"}}>股数</span>
+              <span>原因</span>
+            </div>
+            {trades.map(([date,action,price,shares,reason]) => (
+              <div key={date} className="trade-row">
+                <span className="trade-date">{date}</span>
+                <span className={`trade-action ${action==="BUY"?"buy":"sell"}`}>{action}</span>
+                <span className="trade-price">{price}</span>
+                <span className="trade-shares">{shares}</span>
+                <span className="trade-reason">{reason}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<SketchApp />);
+</script>
+</body>
+</html>

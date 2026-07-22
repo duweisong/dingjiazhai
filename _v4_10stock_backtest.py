@@ -7,14 +7,16 @@ import os, pickle, numpy as np, pandas as pd
 from datetime import datetime
 from collections import Counter
 
-CACHE_DIR = r'C:\AI\.strategy_cache'
-START = pd.Timestamp('2026-06-01')
-END = pd.Timestamp('2026-07-07')
+CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.strategy_cache')
+START = pd.Timestamp('2026-07-01')
+END = pd.Timestamp.now()  # Dynamic: today's date for daily run
 POS_STRONG = 10; POS_NEUTRAL = 8; POS_BEAR = 4
 BEAR_MA = 120; MIN_AMT = 30_000_000; MIN_SCORE_BASE = 0.2
 COOL_OFF = 2
 MIN_HOLD = 1
 EMERGENCY_DROP = -0.08
+BEAR_FILTER = False  # Disabled: hurts recovery, bear params are better
+BEAR_FILTER_MA = 60  # Use 60-day MA for bear filter (faster than 120)
 SL_FLOOR = -0.05  # hard floor: never looser than -5%
 TIME_LOSER = 5     # exit if held this many days AND still losing
 MA20_CONSEC = 3    # consecutive days below MA20 before exit
@@ -23,8 +25,8 @@ FW = {'ret_5d':0.10,'ret_10d':0.10,'ret_20d':0.10,'vol_ratio':0.20,
       'price_vs_ma20':0.20,'ma_alignment':0.12,'up_days_10':0.05,
       'turnover':0.05,'atr_pct':-0.08}
 EX = {'atm_low':1.2,'atm_high':2.0,'max_hold':10,'tp_std':0.12,'tp_top':0.15,
-      'rank_out_ratio':0.75,'rank_drop':50,'sl_hard':-0.08,'sl_bear':-0.06,
-      'ma_p':20,'atr_sl_mult':2.5}
+      'rank_out_ratio':0.75,'rank_drop':50,'sl_hard':-0.08,'sl_bear':-0.10,
+      'ma_p':20,'atr_sl_mult':2.5,'tp_bear':0.10}  # Bear: wider SL, tighter TP
 
 N50 = {'600519':'GZMT','000858':'WLY','601318':'PA','600036':'CMB','000333':'Midea',
     '600276':'HengRui','002415':'Hik','000001':'PAB','002594':'BYD','601888':'CTRIP',
@@ -37,6 +39,71 @@ N50 = {'600519':'GZMT','000858':'WLY','601318':'PA','600036':'CMB','000333':'Mid
     '601225':'SMY','002142':'NBB','600048':'Poly','601328':'BoCom','600016':'CMBC',
     '601939':'CCB','601288':'ABC','600104':'SAIC','002271':'DFYS','600050':'Unicom'}
 C = {}
+
+def download_data():
+    """Download latest stock data from baostock for all N50 stocks + CSI300 index"""
+    import baostock as bs
+    os.makedirs(CACHE_DIR, exist_ok=True)
+    end_date = pd.Timestamp.now().strftime('%Y-%m-%d')
+    # Download enough history for factor calculations (need 120+ days lookback)
+    start_date = (pd.Timestamp.now() - pd.Timedelta(days=365)).strftime('%Y-%m-%d')
+
+    print(f'Downloading data: {start_date} ~ {end_date}')
+    bs.login()
+
+    # Download CSI300 index benchmark
+    try:
+        rs = bs.query_history_k_data_plus('sh.000300',
+            'date,code,open,high,low,close,volume,amount',
+            start_date=start_date, end_date=end_date,
+            frequency='d', adjustflag='2')
+        if rs.error_code == '0':
+            data = []
+            while rs.next(): data.append(rs.get_row_data())
+            if len(data) >= 60:
+                df = pd.DataFrame(data, columns=rs.fields)
+                for col in ['open','high','low','close','volume','amount']:
+                    df[col] = pd.to_numeric(df[col], errors='coerce')
+                df['date'] = pd.to_datetime(df['date'])
+                df = df.sort_values('date').reset_index(drop=True)
+                pickle.dump({'df': df}, open(os.path.join(CACHE_DIR, '000300.pkl'), 'wb'))
+                print(f'  CSI300: {len(df)} rows -> {df["date"].iloc[-1].date()}')
+    except Exception as e:
+        print(f'  CSI300 download failed: {e}')
+
+    # Download individual stocks
+    success = 0
+    for code, name in N50.items():
+        try:
+            bs_code = f'sh.{code}' if (code.startswith('6') or code.startswith('68')) else f'sz.{code}'
+            rs = bs.query_history_k_data_plus(bs_code,
+                'date,code,open,high,low,close,volume,amount',
+                start_date=start_date, end_date=end_date,
+                frequency='d', adjustflag='2')
+            if rs.error_code != '0':
+                continue
+            data = []
+            while rs.next(): data.append(rs.get_row_data())
+            if len(data) < 60:
+                continue
+            df = pd.DataFrame(data, columns=rs.fields)
+            for col in ['open','high','low','close','volume','amount']:
+                df[col] = pd.to_numeric(df[col], errors='coerce')
+            df['date'] = pd.to_datetime(df['date'])
+            df = df.sort_values('date').reset_index(drop=True)
+            # Ensure required columns
+            required = ['open','high','low','close','volume','amount']
+            if not all(c in df.columns for c in required):
+                continue
+            pickle.dump({'df': df}, open(os.path.join(CACHE_DIR, f'{code}.pkl'), 'wb'))
+            success += 1
+            if success % 10 == 0:
+                print(f'  Downloaded {success}/{len(N50)} stocks...')
+        except Exception as e:
+            print(f'  {code} ({name}) failed: {e}')
+
+    bs.logout()
+    print(f'Downloaded {success}/{len(N50)} stocks successfully')
 
 def load():
     skip_codes = {'000300', 'sh.000300', 'csi300_stocks'}
@@ -123,7 +190,16 @@ def score(dt,bm):
     return df,best,ib,ir
 
 # === MAIN ===
+try:
+    download_data()
+except Exception as e:
+    print(f'[WARN] Data download failed: {e}')
+    print('[INFO] Falling back to cached data...')
+
 load()
+if len(C) == 0:
+    print('[ERROR] No stock data available. Check baostock connection or cache.')
+    import sys; sys.exit(1)
 bm=bench()
 if bm is not None: dates=bm['date'].tolist()
 else:
@@ -150,11 +226,12 @@ for i,dt in enumerate(td):
         score_now = r['score']
         p['dh']+=1;pf=cl/p['ep']-1;p['hi']=max(p.get('hi',p['ep']),cl)
 
-        # Dynamic hard stop: -2.5xATR with -5% floor and -8% cap
+        # Dynamic hard stop: bear uses wider stop, bull uses ATR-based
         atr_sl = -EX['atr_sl_mult'] * atr / p['ep']
-        hard_sl = max(SL_FLOOR, min(EX['sl_hard'], atr_sl))
-        # In bear market, use stricter stop
-        if ib: hard_sl = max(SL_FLOOR, EX['sl_bear'])
+        if ib:
+            hard_sl = EX['sl_bear']  # Bear: fixed -10%
+        else:
+            hard_sl = max(SL_FLOOR, min(EX['sl_hard'], atr_sl))
 
         # Emergency check
         day_drop = (cl - p.get('prev_close', p['ep'])) / p.get('prev_close', p['ep'])
@@ -165,7 +242,11 @@ for i,dt in enumerate(td):
         p['ma20_cnt'] = p.get('ma20_cnt', 0) + 1 if below_ma20 else 0
 
         atm=EX['atm_high'] if ap>5 else ((EX['atm_low']+EX['atm_high'])/2 if ap>2.5 else EX['atm_low'])
-        tp = EX['tp_top'] if p.get('er',99) <= 3 else EX['tp_std']
+        # Bear uses uniform tight TP, bull uses tiered TP
+        if ib:
+            tp = EX['tp_bear']  # Bear: uniform 10%
+        else:
+            tp = EX['tp_top'] if p.get('er',99) <= 3 else EX['tp_std']
         max_hold = 15 if p.get('er',99) <= 5 else EX['max_hold']
 
         go=False;reason=''
@@ -185,19 +266,33 @@ for i,dt in enumerate(td):
 
     for code,reason in to_del:
         p=pos[code]
+        row_match = sc[sc['code']==code]
+        if len(row_match) == 0:
+            xp = p['ep']  # Use entry price as fallback
+        else:
+            xp = row_match.iloc[0]['close']
         trades.append({'dt':dt,'act':'SELL','c':code,'n':p['name'],'ep':p['ep'],
-            'xp':sc[sc['code']==code].iloc[0]['close'],
-            'pnl':(sc[sc['code']==code].iloc[0]['close']/p['ep']-1)*100,
+            'xp':xp, 'pnl':(xp/p['ep']-1)*100,
             'dh':p['dh'],'rs':reason})
         del pos[code]
-        # Set cooling-off ban
         banned[code] = dt + pd.Timedelta(days=COOL_OFF)
 
     # === BUYS (V4.2 refined) ===
+    # Bear market filter: CSI300 < MA60 → no new buys
+    bear_filter_active = False
+    if BEAR_FILTER and bm is not None:
+        bm_slice = bm[bm['date'] <= dt]
+        if len(bm_slice) >= BEAR_FILTER_MA:
+            idx_ma60 = bm_slice['close'].rolling(BEAR_FILTER_MA).mean().iloc[-1]
+            idx_now = bm_slice['close'].iloc[-1]
+            bear_filter_active = (idx_now < idx_ma60)
+
     # Dynamic min_score: higher bar when nearly full
     n_held = len(pos)
     min_sc = MIN_SCORE_BASE + 0.05 * (n_held // 3)  # 0.20 at 0-2, 0.25 at 3-5, 0.30 at 6-8
-    slots=mx-len(pos)
+    slots = mx - len(pos)
+    if bear_filter_active:
+        slots = 0  # No new buys in bear market
     if slots>0 and best>=min_sc:
         held=set(pos.keys())
         for _,r in sc.iterrows():
@@ -224,7 +319,9 @@ for i,dt in enumerate(td):
             r=row.iloc[0];pnl=(r['close']/p['ep']-1)*100
             holds.append({'c':code,'n':p['name'],'ep':p['ep'],'cp':r['close'],'pnl':pnl,'dh':p['dh'],'er':p['er']})
     holds.sort(key=lambda x:x['pnl'],reverse=True)
-    all_days.append({'dt':dt,'n':len(holds),'mx':mx,'reg':ir,'holds':holds,'banned':len([k for k,v in banned.items() if dt<=v])})
+    all_days.append({'dt':dt,'n':len(holds),'mx':mx,'reg':ir,'holds':holds,
+                     'banned':len([k for k,v in banned.items() if dt<=v]),
+                     'bear_f':bear_filter_active})
     reg=['?','BULL+','NEUTRAL','BEAR'][ir]
     if (i+1)%3==0 or i==0:
         print(f'  [{i+1:3d}/{len(td)}] {dt.date()} {reg} [{len(holds)}/{mx}] banned:{all_days[-1]["banned"]}')
@@ -245,7 +342,7 @@ win_rate = len(wins)/len(sells)*100 if sells else 0
 
 print(f'  DINGJIASHAN V4.3 FINAL (10-STOCK)')
 print(f'  Period: {START.date()} ~ {END.date()} | Days: {len(all_days)} | Avg Hold: {avg_h:.1f}/10')
-print(f'  V4.3: DynSL(-5%~-8%) | Crash(8%) | CoolOff2d | MA20x3d | TimeLoss(5d) | TieredTP | FlexTime | DynSc | LateSlot')
+print(f'  V4.3 BearOpt: DynSL(-5%~-8%) | BearSL(-10%) | BearTP(10%) | Crash(8%) | CoolOff2d | MA20x3d | TimeLoss(5d)')
 print(f'  Trades: {total_trades} ({len(buys)}B/{len(sells)}S) | WinRate: {win_rate:.1f}% | AvgWin: {avg_win:+.1f}% | AvgLoss: {avg_loss:+.1f}%')
 print('='*100)
 
@@ -265,11 +362,43 @@ for d in all_days:
         tp_mark = 'T' if h.get('er',99)<=3 else ''
         print(f'    {h["c"]:<8s} {h["n"]:<6s} {h["ep"]:>7.2f}>{h["cp"]:>7.2f} [{e}]{h["pnl"]:>+6.1f}% d{h["dh"]} #{h.get("er","?")}{tp_mark}')
 
-# Monthly
+# Quarterly breakdown
 print()
 print('='*100)
-print('  MONTHLY SUMMARY')
+print('  QUARTERLY PERFORMANCE')
 print('='*100)
+qtrs={}
+for t in trades:
+    if t['act']!='SELL': continue
+    dt=t['dt']
+    q=f'{dt.year}-Q{(dt.month-1)//3+1}'
+    if q not in qtrs: qtrs[q]={'t':0,'w':0,'pnl':0}
+    qtrs[q]['t']+=1;qtrs[q]['pnl']+=t['pnl']
+    if t['pnl']>0: qtrs[q]['w']+=1
+
+# Count trading days per quarter
+qdays={}
+for d in all_days:
+    dt=d['dt'];q=f'{dt.year}-Q{(dt.month-1)//3+1}'
+    qdays[q]=qdays.get(q,0)+1
+
+print(f"  {'Quarter':<10} {'Days':>5} {'Sells':>6} {'Win%':>6} {'SumPnL':>8} {'Return':>8} {'BearD':>6}")
+print(f"  {'-'*56}")
+cum_ret=0
+for q in sorted(qtrs.keys()):
+    qd=qtrs[q];wr=qd['w']/qd['t']*100 if qd['t'] else 0
+    ret=qd['pnl']/8
+    cum_ret+=ret
+    bear_days = sum(1 for d in all_days if f'{d["dt"].year}-Q{(d["dt"].month-1)//3+1}'==q and d['reg']==3)
+    print(f"  {q:<10} {qdays.get(q,0):>5} {qd['t']:>6} {wr:>5.1f}% {qd['pnl']:>+7.1f}% {ret:>+7.1f}% {bear_days:>6}")
+print(f"  {'-'*56}")
+total_bear_days = sum(1 for d in all_days if d['reg']==3)
+print(f"  {'TOTAL':<10} {len(all_days):>5} {total_sells:>6} {wr_all:>5.1f}% {total_pnl:>+7.1f}% {total_pnl/8:>+7.1f}% {total_bear_days:>6}")
+print(f"  Bear filter: CSI300 < MA60 → no new buys. Total bear days: {total_bear_days}/{len(all_days)}")
+
+# Monthly
+print()
+print('  MONTHLY')
 mons={}
 for d in all_days:
     mon=d['dt'].strftime('%Y-%m')
@@ -277,9 +406,11 @@ for d in all_days:
     mons[mon]['d']+=1;mons[mon]['h']+=d['n']
     for h in d['holds']:mons[mon]['c'][h['c']]+=1
 for mon,md in sorted(mons.items()):
-    avg=md['h']/md['d'];top=md['c'].most_common(8)
+    avg=md['h']/md['d'];top=md['c'].most_common(5)
     ts=', '.join([f'{c}({n}d)' for c,n in top])
-    print(f'  {mon}: avg {avg:.1f}/10 | {md["d"]}d | Top: {ts}')
+    mon_sells=sum(1 for t in trades if t['act']=='SELL' and t['dt'].strftime('%Y-%m')==mon)
+    mon_pnl=sum(t['pnl'] for t in trades if t['act']=='SELL' and t['dt'].strftime('%Y-%m')==mon)
+    print(f'  {mon}: {md["d"]:>2d}d avg{avg:.0f}stk sells{mon_sells:>3d} PnL{mon_pnl:>+7.1f}% | {ts}')
 
 # Final holdings
 last=all_days[-1]
@@ -310,38 +441,83 @@ for t in trades:
 # --- AUTO PUSH ---
 import subprocess, json
 
+# Name mapping
+NAME_MAP = {
+    '603259':'药明康德','688036':'传音控股','002558':'巨人网络','600584':'长电科技',
+    '301165':'锐捷网络','000776':'广发证券','601211':'国泰海通','002422':'科伦药业',
+    '688506':'百利天恒','000938':'紫光股份','000301':'东方盛虹','600176':'中国巨石',
+    '600030':'中信证券','000725':'京东方A','600460':'士兰微','600183':'生益科技',
+    '600549':'厦门钨业','600522':'中天科技','603260':'合盛硅业','600160':'巨化股份',
+    '601066':'中信建投','600999':'招商证券','688082':'盛美上海','000657':'中钨高新',
+    '600188':'兖矿能源','001965':'招商公路','601138':'工业富联','300502':'新易盛',
+    '300408':'三环集团','600023':'浙能电力','601872':'招商轮船','688521':'芯原股份',
+    '600362':'江西铜业','603986':'兆易创新','300433':'蓝思科技','688012':'中微公司',
+    '600011':'华能国际','600027':'华电国际','300394':'天孚通信','300308':'中际旭创',
+    '000100':'TCL科技','002463':'沪电股份','688126':'沪硅产业','002142':'宁波银行',
+    '603501':'韦尔股份','000333':'美的集团','000630':'铜陵有色','001236':'弘元绿能',
+    '601066':'中信建投','600031':'三一重工',
+}
+
+def get_name(code):
+    return NAME_MAP.get(code, code)
+
 # Generate markdown report
 last_n = min(3, len(all_days))
 recent_days = all_days[-last_n:]
 
 md = []
+dt_str = last['dt'].date()
 md.append(f'# 丁家山 V4.3.1 每日操盘信号\n')
-md.append(f'**{last["dt"].date()}** | NEUTRAL | CSI300 10-stock\n')
+md.append(f'**{dt_str}** | 持仓 {last["n"]}/{last["mx"]} | 黑名单 {last.get("banned",0)}只\n')
 md.append(f'\n---\n')
 
-# Recent exits
-recent_exits = [t for t in trades if t['act']=='SELL' and t['dt'] in [d['dt'] for d in recent_days]]
-if recent_exits:
-    md.append(f'## 🔴 近期卖出 ({len(recent_exits)}笔)\n')
-    for t in recent_exits[-8:]:
-        sgn = '+' if t['pnl']>0 else ''
-        md.append(f'- {t["c"]} {t["n"]}: {sgn}{t["pnl"]:.1f}% [{t["rs"]}]\n')
+# Recent exits (today only)
+today_exits = [t for t in trades if t['act']=='SELL' and t['dt']==last['dt']]
+today_buys = [t for t in trades if t['act']=='BUY' and t['dt']==last['dt']]
 
-# Recent buys
-recent_buys = [t for t in trades if t['act']=='BUY' and t['dt'] in [d['dt'] for d in recent_days]]
-if recent_buys:
-    md.append(f'\n## 🟢 近期买入 ({len(recent_buys)}笔)\n')
-    for t in recent_buys[-8:]:
-        md.append(f'- {t["c"]} {t["n"]}: {t["rs"]}\n')
+if today_exits:
+    md.append(f'## 🔴 今日卖出 ({len(today_exits)}笔)\n\n')
+    md.append(f'| 代码 | 名称 | 盈亏 | 持天 | 原因 |\n')
+    md.append(f'|------|------|------|------|------|\n')
+    for t in today_exits:
+        emoji = '🟢' if t['pnl']>0 else '🔴'
+        md.append(f'| {t["c"]} | {get_name(t["c"])} | {emoji} {t["pnl"]:+.1f}% | {t["dh"]}d | {t["rs"]} |\n')
+    md.append('\n')
+
+if today_buys:
+    md.append(f'## 🟢 今日买入 ({len(today_buys)}笔)\n\n')
+    md.append(f'| 代码 | 名称 | 买入价 | 排名 |\n')
+    md.append(f'|------|------|--------|------|\n')
+    for t in today_buys:
+        md.append(f'| {t["c"]} | {get_name(t["c"])} | {t["ep"]:.2f} | {t["rs"]} |\n')
+    md.append('\n')
 
 # Current holdings
-md.append(f'\n---\n## 📊 当前持仓 ({last["n"]}/{last["mx"]})\n\n')
+md.append(f'---\n')
+md.append(f'## 📊 当前持仓 ({last["n"]}/{last["mx"]})\n\n')
+md.append(f'| 代码 | 名称 | 买入价 | 现价 | 盈亏 | 天 | 止盈 |\n')
+md.append(f'|------|------|--------|------|:---:|:---:|:---:|\n')
 for h in last['holds']:
-    sgn = '+' if h['pnl']>0 else ''
-    tp_tag = '⭐15%' if h.get('er',99)<=3 else '12%'
-    md.append(f'- {h["c"]} {h["n"]}: {h["ep"]:.2f}->{h["cp"]:.2f} {sgn}{h["pnl"]:.1f}% {h["dh"]}d [{tp_tag}]\n')
+    emoji = '🟢' if h['pnl']>0 else ('🔴' if h['pnl']<-5 else '🟡' if h['pnl']<0 else '⚪')
+    tp_tag = '15%' if h.get('er',99)<=3 else '12%'
+    md.append(f'| {h["c"]} | {get_name(h["c"])} | {h["ep"]:.2f} | {h["cp"]:.2f} | {emoji} {h["pnl"]:+.1f}% | {h["dh"]}d | {tp_tag} |\n')
 
-md.append(f'\n---\n*{datetime.now().strftime("%Y-%m-%d %H:%M")} 自动生成 | V4.3.1*\n')
+# Stats
+total_trades = len(trades)
+sells = [t for t in trades if t['act']=='SELL']
+wins = [t for t in sells if t['pnl']>0]
+losses = [t for t in sells if t['pnl']<=0]
+win_rate = len(wins)/len(sells)*100 if sells else 0
+avg_win = np.mean([t['pnl'] for t in wins]) if wins else 0
+avg_loss = np.mean([t['pnl'] for t in losses]) if losses else 0
+
+md.append(f'\n---\n')
+md.append(f'## 📈 全期统计 (6/1~{dt_str})\n\n')
+md.append(f'| 交易 | 胜率 | 均盈 | 均亏 | 盈亏比 |\n')
+md.append(f'|:---:|:---:|:---:|:---:|:---:|\n')
+md.append(f'| {len(sells)}笔 | {win_rate:.0f}% | +{avg_win:.1f}% | {avg_loss:.1f}% | {abs(avg_win/avg_loss) if avg_loss!=0 else 99:.1f} |\n')
+
+md.append(f'\n---\n*{datetime.now().strftime("%Y-%m-%d %H:%M")} 自动生成 | V4.3.1 | 仅供参考*\n')
 
 report_text = ''.join(md)
 report_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'daily_reports', 'LATEST.md')
@@ -349,19 +525,20 @@ os.makedirs(os.path.dirname(report_path), exist_ok=True)
 with open(report_path, 'w', encoding='utf-8') as f:
     f.write(report_text)
 
-# Git push
-repo_dir = os.path.dirname(os.path.abspath(__file__))
-try:
-    subprocess.run(['git', 'add', 'daily_reports/'], cwd=repo_dir, capture_output=True)
-    subprocess.run(['git', 'commit', '-m', f'daily signal {datetime.now().strftime("%Y-%m-%d")} V4.3.1'],
-                  cwd=repo_dir, capture_output=True)
-    result = subprocess.run(['git', 'push'], cwd=repo_dir, capture_output=True)
-    if result.returncode == 0:
-        print('[OK] Pushed to GitHub')
-    else:
-        print('[WARN] Git push failed')
-except Exception as e:
-    print(f'[WARN] Git error: {e}')
+# Git push (only for daily runs, skip full backtest)
+if (END - START).days < 60:
+    repo_dir = os.path.dirname(os.path.abspath(__file__))
+    try:
+        r1 = subprocess.run(['git', 'add', 'daily_reports/'], cwd=repo_dir, capture_output=True, text=True)
+        r2 = subprocess.run(['git', 'commit', '-m', f'daily signal {datetime.now().strftime("%Y-%m-%d")} V4.3.1'],
+                          cwd=repo_dir, capture_output=True, text=True)
+        r3 = subprocess.run(['git', 'push'], cwd=repo_dir, capture_output=True, text=True)
+        if r3.returncode == 0:
+            print('[OK] Pushed to GitHub')
+        else:
+            print(f'[WARN] Push: {r3.stderr.strip()[:100]}')
+    except Exception as e:
+        print(f'[WARN] Git error: {e}')
 
 print('='*100)
 print('DONE')

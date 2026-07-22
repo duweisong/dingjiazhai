@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>公众号AI写稿助手 - 10秒生成爆款文章</title>
+<style>
+  :root {
+    --primary: #07c160; --primary-dark: #06ad56;
+    --bg: #f5f5f5; --card: #fff; --text: #333; --sub: #999;
+    --border: #e5e5e5; --gold: #e6a23c;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.8; min-height: 100vh;
+  }
+
+  header {
+    background: linear-gradient(135deg, #07c160, #06ad56);
+    color: #fff; text-align: center; padding: 40px 20px;
+  }
+  header h1 { font-size: 2em; margin-bottom: 5px; }
+  header p { opacity: 0.9; font-size: 1.05em; }
+  header .stats { display: flex; justify-content: center; gap: 25px; margin-top: 15px; flex-wrap: wrap; }
+  header .stat { background: rgba(255,255,255,0.2); padding: 8px 18px; border-radius: 10px; font-size: 0.9em; }
+
+  .container { max-width: 960px; margin: 0 auto; padding: 25px 20px; }
+
+  .card {
+    background: var(--card); border-radius: 14px; padding: 25px 28px;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.04); margin-bottom: 20px;
+  }
+  .card h3 { font-size: 1.2em; margin-bottom: 18px; color: var(--primary); }
+  .card h3 .icon { margin-right: 6px; }
+
+  .form-row { display: flex; gap: 14px; margin-bottom: 14px; flex-wrap: wrap; }
+  .form-group { flex: 1; min-width: 200px; }
+  .form-group label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 0.88em; color: #555; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 11px 14px; border: 2px solid var(--border);
+    border-radius: 8px; font-size: 0.95em; transition: border-color 0.25s;
+    font-family: inherit; background: #fafafa;
+  }
+  .form-group textarea { resize: vertical; min-height: 70px; }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    outline: none; border-color: var(--primary); background: #fff;
+  }
+
+  /* Article type grid */
+  .type-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+  .type-card {
+    padding: 14px 10px; border-radius: 10px; border: 2px solid var(--border);
+    text-align: center; cursor: pointer; transition: all 0.2s; background: #fafafa;
+  }
+  .type-card:hover { border-color: var(--primary); background: #f0faf4; }
+  .type-card.active { border-color: var(--primary); background: #e8f8ef; }
+  .type-card .icon { font-size: 1.8em; display: block; margin-bottom: 4px; }
+  .type-card .name { font-size: 0.85em; font-weight: 600; }
+  .type-card .desc { font-size: 0.72em; color: var(--sub); margin-top: 2px; }
+
+  /* Tones */
+  .tone-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tone-tag {
+    padding: 6px 16px; border-radius: 18px; border: 2px solid var(--border);
+    cursor: pointer; font-size: 0.85em; transition: all 0.2s; background: #fafafa;
+  }
+  .tone-tag:hover { border-color: var(--primary); }
+  .tone-tag.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+  .btn {
+    display: inline-block; padding: 13px 40px; border-radius: 28px;
+    font-size: 1.05em; font-weight: bold; border: none; cursor: pointer;
+    transition: all 0.3s; width: 100%;
+  }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover { background: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 4px 20px rgba(7,193,96,0.25); }
+  .btn-primary:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  /* Result */
+  .result { display: none; }
+  .result.show { display: block; }
+
+  /* Article preview -微信风格 */
+  .wechat-preview {
+    background: #fff; border: 1px solid #e8e8e8; border-radius: 8px;
+    overflow: hidden; max-width: 100%;
+  }
+  .wechat-preview .preview-header {
+    background: #fafafa; padding: 10px 16px; border-bottom: 1px solid #e8e8e8;
+    font-size: 0.78em; color: #999; display: flex; justify-content: space-between; align-items: center;
+  }
+  .wechat-preview .preview-body { padding: 20px 18px; }
+  .wechat-preview .preview-body h2 { font-size: 1.4em; margin-bottom: 16px; color: #111; }
+  .wechat-preview .preview-body p { margin-bottom: 12px; font-size: 0.95em; color: #333; line-height: 2; }
+  .wechat-preview .preview-body .highlight {
+    background: linear-gradient(180deg, transparent 60%, #b3e5c8 60%);
+    padding: 0 2px;
+  }
+  .wechat-preview .preview-body blockquote {
+    border-left: 4px solid var(--primary); padding: 10px 16px;
+    margin: 15px 0; background: #f8fdf9; color: #555; font-size: 0.9em;
+  }
+  .wechat-preview .preview-body ul { margin: 12px 0; padding-left: 20px; }
+  .wechat-preview .preview-body ul li { margin-bottom: 6px; }
+  .wechat-preview .preview-body .cta-box {
+    text-align: center; padding: 18px; background: linear-gradient(135deg, #f0faf4, #e8f8ef);
+    border-radius: 10px; margin-top: 24px;
+  }
+  .wechat-preview .preview-body .cta-box strong { color: var(--primary); }
+
+  .action-bar { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
+  .action-bar .btn { flex: 1; min-width: 120px; }
+  .btn-secondary { background: #fff; border: 2px solid var(--primary); color: var(--primary); }
+  .btn-secondary:hover { background: #f0faf4; }
+  .btn-gold { background: var(--gold); color: #fff; }
+  .btn-gold:hover { background: #d4921a; }
+
+  /* Section blocks */
+  .section-block { margin-bottom: 14px; }
+  .section-block .section-label {
+    font-size: 0.78em; color: var(--sub); text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 4px; font-weight: 600;
+  }
+  .section-block .section-content {
+    background: #fafafa; padding: 12px 16px; border-radius: 8px;
+    white-space: pre-wrap; font-size: 0.93em; line-height: 1.9;
+  }
+
+  .copy-btn {
+    padding: 5px 14px; border-radius: 6px; border: 1px solid #ddd;
+    background: #fff; cursor: pointer; font-size: 0.78em; color: #666; transition: all 0.2s;
+  }
+  .copy-btn:hover { border-color: var(--primary); color: var(--primary); }
+  .copy-btn.copied { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+  /* Toast */
+  .toast {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    background: #333; color: #fff; padding: 12px 28px; border-radius: 28px;
+    z-index: 1000; display: none; font-weight: 600; font-size: 0.9em;
+  }
+
+  /* Loading */
+  .spinner {
+    display: inline-block; width: 18px; height: 18px; border: 2px solid #fff;
+    border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite;
+    vertical-align: middle; margin-right: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Steps */
+  .steps { display: flex; gap: 16px; flex-wrap: wrap; }
+  .step {
+    flex: 1; min-width: 140px; text-align: center; padding: 18px 12px;
+    background: #fafafa; border-radius: 10px;
+  }
+  .step .emoji { font-size: 2em; margin-bottom: 8px; }
+  .step h4 { font-size: 0.95em; margin-bottom: 4px; }
+  .step p { font-size: 0.8em; color: var(--sub); }
+
+  /* Pricing */
+  .pricing-row { display: flex; gap: 16px; flex-wrap: wrap; }
+  .price-card {
+    flex: 1; min-width: 180px; padding: 20px; border-radius: 12px;
+    border: 2px solid var(--border); text-align: center; background: #fff; transition: all 0.3s;
+  }
+  .price-card:hover { transform: translateY(-3px); }
+  .price-card.hot { border-color: var(--primary); background: #f8fdf9; position: relative; }
+  .price-card.hot::before {
+    content: '推荐'; position: absolute; top: -12px; left: 50%;
+    transform: translateX(-50%); background: var(--primary); color: #fff;
+    padding: 3px 16px; border-radius: 12px; font-size: 0.75em; font-weight: bold;
+  }
+  .price-card .amount { font-size: 2.2em; font-weight: bold; color: var(--primary); }
+  .price-card .amount small { font-size: 0.4em; color: var(--sub); }
+  .price-card ul { list-style: none; margin: 12px 0; text-align: left; font-size: 0.85em; }
+  .price-card ul li { padding: 5px 0; }
+  .price-card ul li::before { content: '✓ '; color: var(--primary); font-weight: bold; }
+
+  @media (max-width: 600px) {
+    header h1 { font-size: 1.4em; }
+    .type-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<header>
+  <h1>✍️ 公众号AI写稿助手</h1>
+  <p>输入关键词 → 10秒生成一篇排版精美、逻辑清晰、能涨粉的公众号文章</p>
+  <div class="stats">
+    <div class="stat">6种文章类型</div>
+    <div class="stat">5种写作风格</div>
+    <div class="stat">10秒出稿</div>
+    <div class="stat">免费体验</div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Input Form -->
+  <div class="card">
+    <h3><span class="icon">🎯</span>文章配置</h3>
+    <div class="form-row">
+      <div class="form-group" style="flex:2;">
+        <label>文章主题 / 关键词</label>
+        <input type="text" id="topic" placeholder="例如: 远程办公效率提升、AI对程序员的影响、2026年买房建议..." onkeydown="if(event.key==='Enter')generate()">
+      </div>
+      <div class="form-group">
+        <label>目标读者</label>
+        <select id="audience">
+          <option value="职场人">职场人</option>
+          <option value="创业者">创业者</option>
+          <option value="程序员">程序员</option>
+          <option value="学生">学生</option>
+          <option value="宝妈">宝妈</option>
+          <option value="投资者">投资者</option>
+          <option value="普通大众">普通大众</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom:14px;">
+      <label>文章类型</label>
+      <div class="type-grid" id="type-grid">
+        <div class="type-card active" data-type="howto"><span class="icon">📖</span><span class="name">干货教程</span><span class="desc">方法论/步骤</span></div>
+        <div class="type-card" data-type="opinion"><span class="icon">💬</span><span class="name">观点评论</span><span class="desc">有态度的分析</span></div>
+        <div class="type-card" data-type="story"><span class="icon">📝</span><span class="name">人物故事</span><span class="desc">共情/叙事</span></div>
+        <div class="type-card" data-type="roundup"><span class="icon">📊</span><span class="name">盘点推荐</span><span class="desc">工具/资源合集</span></div>
+        <div class="type-card" data-type="analysis"><span class="icon">🔍</span><span class="name">行业分析</span><span class="desc">深度解读</span></div>
+        <div class="type-card" data-type="trend"><span class="icon">🔥</span><span class="name">热点解读</span><span class="desc">追热点/评论</span></div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>写作风格 (多选)</label>
+        <div class="tone-tags" id="tone-tags">
+          <span class="tone-tag active" data-tone="专业">专业深度</span>
+          <span class="tone-tag" data-tone="通俗">通俗易懂</span>
+          <span class="tone-tag" data-tone="幽默">幽默吐槽</span>
+          <span class="tone-tag" data-tone="共情">情感共鸣</span>
+          <span class="tone-tag" data-tone="数据">数据驱动</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom:14px;">
+      <label>补充说明 (选填)</label>
+      <textarea id="extra" placeholder="比如: 需要引用具体案例、重点讲XX方面、字数1500左右、不要用太多专业术语..."></textarea>
+    </div>
+
+    <button class="btn btn-primary" id="gen-btn" onclick="generate()">
+      🚀 一键生成公众号文章
+    </button>
+    <p style="text-align:center;margin-top:8px;color:var(--sub);font-size:0.8em;">
+      免费用户每天3次 · Pro用户无限生成 · 生成后请自行审核发布
+    </p>
+  </div>
+
+  <!-- Result -->
+  <div class="card result" id="result-card">
+    <h3><span class="icon">✨</span>生成结果</h3>
+
+    <!-- 标题 -->
+    <div class="section-block">
+      <div class="section-label">📌 文章标题 (3个备选)</div>
+      <div class="section-content" id="titles-out"></div>
+    </div>
+
+    <!-- 开头 -->
+    <div class="section-block">
+      <div class="section-label">🎣 开头钩子</div>
+      <div class="section-content" id="hook-out"></div>
+    </div>
+
+    <!-- 正文 -->
+    <div class="section-block">
+      <div class="section-label">📝 正文内容</div>
+      <div class="section-content" id="body-out"></div>
+    </div>
+
+    <!-- 结尾 -->
+    <div class="section-block">
+      <div class="section-label">🎯 结尾引导</div>
+      <div class="section-content" id="cta-out"></div>
+    </div>
+
+    <!-- 排版建议 -->
+    <div class="section-block">
+      <div class="section-label">💡 排版建议</div>
+      <div class="section-content" id="tips-out"></div>
+    </div>
+
+    <div class="action-bar">
+      <button class="btn copy-btn" onclick="copyAll()">📋 一键复制全文</button>
+      <button class="btn btn-secondary" onclick="regenerateTitle()">🔄 换个标题</button>
+      <button class="btn btn-primary" onclick="generate()">🚀 再写一篇</button>
+    </div>
+  </div>
+
+  <!-- WeChat Preview -->
+  <div class="card result" id="preview-card">
+    <h3><span class="icon">📱</span>微信预览效果</h3>
+    <div class="wechat-preview">
+      <div class="preview-header">
+        <span>公众号文章预览</span>
+        <span style="color:var(--sub)">模拟效果</span>
+      </div>
+      <div class="preview-body" id="preview-body"></div>
+    </div>
+  </div>
+
+  <!-- How it works -->
+  <div class="card">
+    <h3><span class="icon">🔧</span>怎么做到的</h3>
+    <div class="steps">
+      <div class="step"><div class="emoji">🧠</div><h4>AI分析</h4><p>理解主题和读者画像</p></div>
+      <div class="step"><div class="emoji">📐</div><h4>结构化</h4><p>套用爆款文章结构模板</p></div>
+      <div class="step"><div class="emoji">✍️</div><h4>生成内容</h4><p>标题+开头+正文+结尾</p></div>
+      <div class="step"><div class="emoji">🎨</div><h4>排版输出</h4><p>微信风格格式，直接可用</p></div>
+    </div>
+  </div>
+
+  <!-- Pricing -->
+  <div class="card">
+    <h3><span class="icon">💰</span>定价</h3>
+    <div class="pricing-row">
+      <div class="price-card">
+        <div class="amount">¥0<small>/月</small></div>
+        <p style="font-weight:600;">免费版</p>
+        <ul>
+          <li>每天3次生成</li>
+          <li>6种文章类型</li>
+          <li>基础排版建议</li>
+        </ul>
+      </div>
+      <div class="price-card hot">
+        <div class="amount">¥39<small>/月</small></div>
+        <p style="font-weight:600;">Pro 版</p>
+        <ul>
+          <li>无限次生成</li>
+          <li>标题A/B测试</li>
+          <li>历史记录保存</li>
+          <li>多平台适配</li>
+          <li>优先新功能</li>
+        </ul>
+      </div>
+      <div class="price-card">
+        <div class="amount">¥99<small>/月</small></div>
+        <p style="font-weight:600;">团队版</p>
+        <ul>
+          <li>Pro全部功能</li>
+          <li>5个子账号</li>
+          <li>品牌风格定制</li>
+          <li>批量生成50篇/次</li>
+          <li>专属选题建议</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ===== State =====
+let currentArticleType = 'howto';
+let currentResult = null;
+
+// ===== Type selection =====
+document.querySelectorAll('#type-grid .type-card').forEach(card => {
+  card.addEventListener('click', function() {
+    document.querySelectorAll('#type-grid .type-card').forEach(c => c.classList.remove('active'));
+    this.classList.add('active');
+    currentArticleType = this.dataset.type;
+  });
+});
+
+// ===== Tone selection =====
+document.querySelectorAll('#tone-tags .tone-tag').forEach(tag => {
+  tag.addEventListener('click', function() { this.classList.toggle('active'); });
+});
+
+// ===== Generate =====
+async function generate() {
+  const topic = document.getElementById('topic').value.trim();
+  if (!topic) { showToast('请输入文章主题'); return; }
+
+  const btn = document.getElementById('gen-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>AI 正在创作中...';
+
+  const audience = document.getElementById('audience').value;
+  const extra = document.getElementById('extra').value.trim();
+  const tones = Array.from(document.querySelectorAll('#tone-tags .tone-tag.active'))
+    .map(t => t.dataset.tone);
+
+  // Try server, fallback to local
+  try {
+    const res = await fetch('/api/wechat/generate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ topic, type: currentArticleType, audience, tones, extra })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      currentResult = data.content;
+      renderResult(data.content);
+      btn.disabled = false;
+      btn.innerHTML = '🚀 一键生成公众号文章';
+      return;
+    }
+  } catch(e) {}
+
+  // Local fallback
+  const content = generateLocal(topic, currentArticleType, audience, tones, extra);
+  currentResult = content;
+  renderResult(content);
+
+  btn.disabled = false;
+  btn.innerHTML = '🚀 一键生成公众号文章';
+}
+
+// ===== Local Generation Engine =====
+function generateLocal(topic, type, audience, tones, extra) {
+  const seed = topic.length + Date.now() % 100;
+
+  // --- Title generation ---
+  const titleTemplates = {
+    howto: [
+      `从零到一：${topic}完整指南（建议收藏）`,
+      `${topic}的${Math.floor(Math.random()*5+3)}个核心方法，第${Math.floor(Math.random()*3+1)}条最重要`,
+      `做了${Math.floor(Math.random()*3+3)}年${topic.split('').slice(0,2).join('')}，我总结出这${Math.floor(Math.random()*3+2)}条经验`
+    ],
+    opinion: [
+      `${topic}：大多数人都想错了`,
+      `关于${topic}，我有${Math.floor(Math.random()*3+2)}点不同的看法`,
+      `${topic}的真相：比你想象的更${['复杂','简单','残酷','有希望'][seed%4]}`
+    ],
+    story: [
+      `一个${audience}的${topic}之路：从${['迷茫','挫败','零基础','一无所有'][seed%4]}到${['逆袭','蜕变','开窍','突破'][seed%4]}`,
+      `${topic}背后，那个${['不被理解','坚持10年','从月薪3000到'][seed%3]}的人`,
+      `我${topic}的${Math.floor(Math.random()*5+3)}年：${['踩过的坑','学到的事','改变我的人'][seed%3]}`
+    ],
+    roundup: [
+      `${new Date().getFullYear()}年${topic}必备${['工具','资源','方法','书籍'][seed%4]}大盘点`,
+      `${['亲测好用','私藏推荐','效率翻倍'][seed%3]}！这${Math.floor(Math.random()*4+5)}个${topic}${['神器','方法','网站'][seed%3]}你一定要知道`,
+      `${topic}领域最值得关注的${Math.floor(Math.random()*5+5)}个${['趋势','产品','博主'][seed%3]}`
+    ],
+    analysis: [
+      `深度拆解${topic}：${['为什么','如何','谁在'][seed%3]}${['爆发','增长','改变格局','重新定义规则'][seed%4]}`,
+      `${topic}行业报告：${Math.floor(Math.random()*5+5)}个你必须知道的关键数据`,
+      `${topic}的${['底层逻辑','商业密码','未来趋势'][seed%3]}，一文讲透`
+    ],
+    trend: [
+      `${topic}刷屏了，但${Math.floor(Math.random()*3+7)}成人没看懂背后的逻辑`,
+      `热点解读：${topic}到底意味着什么？`,
+      `${topic}事件持续发酵，这${Math.floor(Math.random()*2+3)}点才是关键`
+    ]
+  };
+
+  const titles = titleTemplates[type] || titleTemplates.howto;
+
+  // --- Hook generation ---
+  const hookTemplates = {
+    howto: [
+      `你是否也有这样的困扰：想${topic}，但不知道从哪里开始？网上的教程要么太浅、要么太散，看完还是不会。\n\n今天这篇文章，我花了${Math.floor(Math.random()*5+5)}个小时整理，把${topic}最核心的方法论拆成${Math.floor(Math.random()*3+3)}个步骤，保证你看完就能上手。`,
+      `最近我做了个小调查，问${Math.floor(Math.random()*30+20)}个${audience}：你在${topic}上最大的困难是什么？\n\n排名第一的答案让我很意外——不是"没时间"，不是"没资源"，而是"没有一套清晰可执行的步骤"。\n\n这篇文章就是来解决这个问题的。`
+    ],
+    opinion: [
+      `关于${topic}，我最近读了一篇很有意思的报告。里面有一个数据让我反复看了三遍——${Math.floor(Math.random()*30+40)}%的人其实完全做错了方向。\n\n今天我想聊聊这个话题，可能会得罪一些人，但我觉得有些真相必须有人说出来。`,
+      `${topic}这个话题，最近${['很火','争议很大','被讨论得很多'][seed%3]}。但我发现大多数讨论都浮在表面，很少有人愿意深入分析背后的逻辑。\n\n这篇文章，我想从${Math.floor(Math.random()*2+3)}个不太一样的角度，重新审视${topic}。`
+    ],
+    story: [
+      `${Math.floor(Math.random()*3+3)}年前的一个深夜，${['我','他','她'][seed%3]}坐在${['出租屋里','办公室里','电脑前'][seed%3]}，盯着屏幕上的数字发了好久的呆。\n\n那是${['我','他','她'][seed%3]}第${Math.floor(Math.random()*10+5)}次尝试${topic}。之前的每一次，都以失败告终。但这一次，不一样。`,
+      `你见过凌晨${Math.floor(Math.random()*3+2)}点的${['北京','上海','深圳','杭州'][seed%4]}吗？\n\n为了${topic}，我见过整整${Math.floor(Math.random()*6+3)}个月。今天想把这个故事讲给你听。`
+    ],
+    roundup: [
+      `做${topic}这些年，我试用过的${['工具','资源','方法'][seed%3]}不下${Math.floor(Math.random()*50+50)}个。踩过的坑、交过的学费，加起来够买一辆车了。\n\n今天我把其中最实用的${Math.floor(Math.random()*5+5)}个整理出来，每一个都是真金白银换来的经验。`,
+      `效率高的人，不是比你更努力，而是比你更会用${['工具','方法','资源'][seed%3]}。\n\n这是我在${topic}领域私藏的${Math.floor(Math.random()*4+5)}个${['神器','技巧','资源'][seed%3]}，今天全部公开。`
+    ],
+    analysis: [
+      `先说结论：${topic}正在经历一个${['结构性','根本性','历史性'][seed%3]}的变化。\n\n这不是危言耸听。我梳理了最近${Math.floor(Math.random()*2+1)}年的数据和行业动态，发现了${Math.floor(Math.random()*2+3)}个关键信号，每一个都在指向同一个方向。`,
+      `${topic}这个赛道，${new Date().getFullYear()}年注定不平静。\n\n从${['政策','技术','市场','用户'][seed%4]}端的变化来看，一场变革已经在悄悄发生。这篇文章帮你理清局势。`
+    ],
+    trend: [
+      `昨天的热搜大家都看到了吧？${topic}事件在${Math.floor(Math.random()*10+10)}小时内阅读量突破${Math.floor(Math.random()*5+2)}亿。\n\n但在这喧闹背后，有${Math.floor(Math.random()*2+3)}个关键信息被大多数人忽略了。`,
+      `${topic}这件事，网上吵得不可开交。支持的和反对的各说各的，但我觉得两边都忽略了一个核心问题。\n\n今天不站队，只理性分析。`
+    ]
+  };
+
+  const hook = (hookTemplates[type] || hookTemplates.howto)[seed % (hookTemplates[type] || hookTemplates.howto).length];
+
+  // --- Body generation ---
+  const isDataDriven = tones.includes('数据');
+  const isHumorous = tones.includes('幽默');
+  const isProfessional = tones.includes('专业');
+
+  const bodyParts = [];
+  const sectionCount = type === 'roundup' ? Math.floor(Math.random()*4+5) : Math.floor(Math.random()*2+3);
+
+  const transitions = [
+    '那么，具体到实践中应该怎么做呢？',
+    '先来看第一个关键点。',
+    '说到这里，你可能要问了——',
+    '数据不会说谎，我们来看一组数字。',
+    '有意思的是，我观察到一个普遍规律——',
+    '换个角度思考这个问题——',
+    '举个例子就更清楚了。',
+    '聊完理论，再说实操。',
+    '但更重要的是接下来的这一点。',
+    '这里分享一个我自己踩过的坑——'
+  ];
+
+  for (let i = 0; i < sectionCount; i++) {
+    const subtopics = [
+      `${isProfessional ? '从底层逻辑来看，' : ''}${topic}的第一个核心是${['方法','认知','习惯','执行力'][i%4]}。${isHumorous ? '说起来简单，做起来嘛...你懂的。' : '很多人的误区就在这里——他们以为需要天赋，其实需要的是正确的方法。'}`,
+      `${isDataDriven ? `数据显示，在${topic}上持续投入的${audience}，${Math.floor(Math.random()*30+20)}%在${Math.floor(Math.random()*3+3)}个月内能看到明显效果。` : ''}${isProfessional ? '这背后的原因很清晰：' : '为什么呢？'}因为${topic}本质上是一个${['复利','积累','反馈循环','系统'][i%4]}的过程。`,
+      `${isHumorous ? '说句大实话——' : ''}很多人在${topic}上最大的问题不是不够努力，而是${['方向错了','方法不对','太着急','信息不足'][i%4]}。${['我见过太多人','不少朋友告诉我','读者群里经常有人问'][i%3]}——${['为什么我做了这么久还是没有效果？','是不是我不适合做这个？','要不要放弃？'][i%3]}`,
+      `具体怎么做呢？分享${Math.floor(Math.random()*2+3)}个实操步骤：\n\n1. **${['明确目标','拆解任务','找到对标','建立系统'][i%4]}**：${['先搞清楚你要达到什么效果','把大目标拆成每天可执行的小任务','找一个已经做到的人学习他的路径','把流程固定下来变成习惯'][i%4]}\n2. **${['持续执行','定期复盘','收集反馈','优化迭代'][i%4]}**：${['每天雷打不动地推进','每周花30分钟回顾做了哪些、哪些有效','主动向你的读者/用户/同事收集意见','根据反馈调整方法，不断精进'][i%4]}`,
+      `这里分享一个案例：有一个${audience}，${['花了','坚持了','投入了'][i%3]}${Math.floor(Math.random()*3+3)}个月时间专注于${topic}，结果${['效果惊人','完全改变了现状','打开了新局面'][i%3]}。他的方法可以总结为三点：${['聚焦','坚持','迭代'][i%3]}。`
+    ];
+
+    bodyParts.push(`## ${['为什么','怎么做','关键点','核心方法','实操指南'][i%5]}${i+1}：${['别再走弯路了','这个方法90%的人不知道','一定要掌握','比努力更重要的事'][i%4]}\n\n${subtopics[i % subtopics.length]}`);
+  }
+
+  const body = bodyParts.join('\n\n');
+
+  // --- CTA generation ---
+  const ctaTemplates = [
+    `最后，我想用一句话总结今天的内容：\n\n> ${topic}，${['方法比努力重要','坚持比聪明重要','方向比速度重要','少即是多','慢就是快'][seed%5]}。\n\n好了，以上就是今天的分享。如果你觉得有收获，欢迎**点赞、在看、转发**，让更多人看到。\n\n也欢迎在**评论区聊聊**：你在${topic}上踩过最大的坑是什么？我会一一回复。\n\n我们下期见 👋`,
+    `写到这，我想起一句话：\n\n> "${['种一棵树最好的时间是十年前，其次是现在。','你不需要很厉害才能开始，但你需要开始才能很厉害。','所谓专家，不过是把所有错都犯过一遍的人。'][seed%3]}"\n\n${topic}这件事，其实没那么难。难的是坚持，难的是放下完美主义，难的是相信自己可以。\n\n**今天就开始行动吧。** 哪怕只是迈出一小步。\n\n如果这篇文章对你有启发，请**转发给一个正在纠结的朋友**。也许你的一个转发，就能推动他开始改变。`,
+    `总结一下今天的核心观点：\n\n1. ${topic}的关键在于${['方法','系统','持续','专注'][seed%4]}\n2. 不要${['完美主义','急于求成','闭门造车','自我怀疑'][seed%4]}\n3. ${['从小处着手','找一个对标','先完成再完美','建立反馈循环'][seed%4]}\n\n最后，如果你觉得有用，**点个"在看"**，让算法君知道这篇文章值得推给更多人。\n\n评论区留下你的想法，我想听听你的故事。`
+  ];
+
+  const cta = ctaTemplates[seed % ctaTemplates.length];
+
+  // --- Tips generation ---
+  const tipsTemplates = [
+    `• 标题建议用16-18字，信息量要足\n• 正文每段不超过3句话，多用空行\n• 关键数据用**加粗**突出\n• 适当使用引用块 > 来突出金句\n• 结尾一定要有互动引导（点赞/在看/评论）\n• 配图建议：封面图+3-5张内文配图${isDataDriven ? '\n• 数据部分建议配图表更直观' : ''}`,
+    `• 开头500字内必须抛出核心观点\n• 每个小标题用疑问句或数字开头更吸引人\n• 正文控制在1500-2500字（太短没深度，太长没人看）\n• 适当加入个人经历增加可信度\n• 用短句和口语化表达，避免长难句${isHumorous ? '\n• 幽默可以，但别玩梗过头影响专业性' : ''}`
+  ];
+
+  const tips = tipsTemplates[seed % tipsTemplates.length];
+
+  return { titles: titles.join('\n\n'), hook, body, cta, tips, type, topic, audience };
+}
+
+// ===== Render =====
+function renderResult(content) {
+  document.getElementById('titles-out').textContent = content.titles;
+  document.getElementById('hook-out').textContent = content.hook;
+  document.getElementById('body-out').textContent = content.body;
+  document.getElementById('cta-out').textContent = content.cta;
+  document.getElementById('tips-out').textContent = content.tips;
+
+  document.getElementById('result-card').classList.add('show');
+  document.getElementById('preview-card').classList.add('show');
+
+  // WeChat preview
+  const bodyHtml = content.body
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^\d+\.\s\*\*(.+?)\*\*：(.+)$/gm, '<p><strong>$1</strong>：$2</p>')
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/^/,'<p>').replace(/$/,'</p>');
+
+  const quoteMatch = content.cta.match(/^> (.+?)$/m);
+  const quoteBlock = quoteMatch ? `<blockquote>${quoteMatch[1]}</blockquote>` : '';
+
+  document.getElementById('preview-body').innerHTML = `
+    <h2>${content.titles.split('\n')[0]}</h2>
+    ${content.hook.split('\n\n').map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('')}
+    ${bodyHtml}
+    ${quoteBlock}
+    <div class="cta-box">
+      <strong>👍 点赞 · 👀 在看 · 🔄 转发</strong><br>
+      <span style="font-size:0.85em;color:#888;">觉得有用？分享给你的朋友</span>
+    </div>
+  `;
+
+  // Scroll to result
+  document.getElementById('result-card').scrollIntoView({behavior: 'smooth'});
+}
+
+// ===== Regenerate title =====
+function regenerateTitle() {
+  if (!currentResult) return;
+  const { topic, type, audience } = currentResult;
+  const tones = Array.from(document.querySelectorAll('#tone-tags .tone-tag.active')).map(t => t.dataset.tone);
+  const newContent = generateLocal(topic, type, audience, tones, '');
+  currentResult.titles = newContent.titles;
+  document.getElementById('titles-out').textContent = newContent.titles;
+  showToast('标题已刷新!');
+}
+
+// ===== Copy all =====
+function copyAll() {
+  if (!currentResult) return;
+  const lines = currentResult.titles.split('\n')[0];
+  const full = `${lines}\n\n${currentResult.hook}\n\n${currentResult.body}\n\n${currentResult.cta}`;
+  navigator.clipboard.writeText(full).then(() => showToast('全文已复制! 可直接粘贴到公众号编辑器'));
+}
+
+// ===== Toast =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 2500);
+}
+
+// ===== Init =====
+console.log('公众号AI写稿助手 v1.0 已就绪');
+</script>
+
+</body>
+</html>

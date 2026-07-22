@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>网格回测报告 — 159886</title>
+<style>
+  :root { --bg: #0f172a; --surface: #1e293b; --text: #e2e8f0;
+          --accent: #3b82f6; --green: #22c55e; --red: #ef4444; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif;
+         background: var(--bg); color: var(--text); padding: 2rem; }
+  h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
+  h2 { font-size: 1.3rem; margin: 1.5rem 0 0.8rem; color: var(--accent); }
+  .subtitle { color: #94a3b8; margin-bottom: 1.5rem; }
+  table { width:100%; border-collapse:collapse; margin-bottom:1rem;
+           background: var(--surface); border-radius: 8px; overflow: hidden; }
+  th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #334155; }
+  th { background: #334155; font-weight: 600; color: #94a3b8; font-size:0.85rem; }
+  td { font-size: 0.9rem; }
+  .summary-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+                     gap: 1rem; margin-bottom: 1.5rem; }
+  .card { background: var(--surface); padding: 1rem; border-radius: 8px;
+           border-left: 4px solid var(--accent); }
+  .card .label { color: #94a3b8; font-size:0.8rem; }
+  .card .value { font-size:1.5rem; font-weight:700; margin-top:0.3rem; }
+  .card .value.positive { color: var(--green); }
+  .card .value.negative { color: var(--red); }
+  footer { margin-top:2rem; color:#64748b; font-size:0.8rem; text-align:center; }
+</style>
+</head>
+<body>
+
+<h1>📊 网格交易回测报告</h1>
+<p class="subtitle">标的: 159886.SZ | 生成时间: 2026-06-12 12:55</p>
+
+<div class="summary-cards">
+  <div class="card">
+    <div class="label">总收益率</div>
+    <div class="value positive">
+      +10.04%</div>
+  </div>
+  <div class="card">
+    <div class="label">年化收益率</div>
+    <div class="value positive">
+      +5.09%</div>
+  </div>
+  <div class="card">
+    <div class="label">夏普比率</div>
+    <div class="value">0.57</div>
+  </div>
+  <div class="card">
+    <div class="label">最大回撤</div>
+    <div class="value negative">-3.28%</div>
+  </div>
+  <div class="card">
+    <div class="label">胜率</div>
+    <div class="value">100.0%</div>
+  </div>
+  <div class="card">
+    <div class="label">最终价值</div>
+    <div class="value">110,042</div>
+  </div>
+</div>
+
+<h2>📋 完整指标</h2>
+<table><tr><td>标的代码</td><td>159886</td></tr>
+<tr><td>网格步长</td><td>2.0%</td></tr>
+<tr><td>网格数量</td><td>20</td></tr>
+<tr><td>单格仓位</td><td>5%</td></tr>
+<tr><td>网格模式</td><td>geometric</td></tr>
+<tr><td>网格线数</td><td>16</td></tr>
+<tr><td>价格下限</td><td>0.59</td></tr>
+<tr><td>价格上限</td><td>0.79</td></tr>
+<tr><td>总收益率</td><td>10.04%</td></tr>
+<tr><td>年化收益率</td><td>5.09%</td></tr>
+<tr><td>夏普比率</td><td>0.57</td></tr>
+<tr><td>最大回撤</td><td>-3.28%</td></tr>
+<tr><td>卡尔玛比率</td><td>1.55</td></tr>
+<tr><td>胜率</td><td>100.0%</td></tr>
+<tr><td>总交易次数</td><td>119</td></tr>
+<tr><td>盈利笔数</td><td>59</td></tr>
+<tr><td>笔均盈利</td><td>161.22</td></tr>
+<tr><td>网格利用率</td><td>100.0%</td></tr>
+<tr><td>最终资金</td><td>110,042.25</td></tr>
+<tr><td>最大持仓市值</td><td>54,751.59</td></tr>
+</table>
+
+<h2>📈 网格参数</h2>
+<table>
+  <tr><th>参数</th><th>值</th></tr>
+  <tr><td>步长</td><td>2.0%</td></tr>
+  <tr><td>网格数</td><td>20</td></tr>
+  <tr><td>单格仓位</td><td>5%</td></tr>
+  <tr><td>网格模式</td><td>geometric</td></tr>
+  <tr><td>价格区间</td><td>0.59 ~ 0.79</td></tr>
+  <tr><td>网格线数</td><td>16</td></tr>
+  <tr><td>止损线</td><td>15%</td></tr>
+</table>
+
+<h2>🔄 最近交易记录</h2>
+<table>
+  <tr><th>日期</th><th>方向</th><th>价格</th><th>股数</th><th>金额</th><th>网格</th></tr>
+  <tr><td>2024-09-05</td><td style='color:#22c55e'>SELL</td><td>0.66</td><td>7,600</td><td>5,039</td><td>6</td></tr>
+<tr><td>2024-09-06</td><td style='color:#ef4444'>BUY</td><td>0.65</td><td>7,600</td><td>4,940</td><td>5</td></tr>
+<tr><td>2024-09-24</td><td style='color:#22c55e'>SELL</td><td>0.66</td><td>7,600</td><td>5,039</td><td>6</td></tr>
+<tr><td>2024-09-25</td><td style='color:#22c55e'>SELL</td><td>0.68</td><td>7,500</td><td>5,070</td><td>7</td></tr>
+<tr><td>2024-09-26</td><td style='color:#22c55e'>SELL</td><td>0.69</td><td>7,300</td><td>5,037</td><td>8</td></tr>
+<tr><td>2024-09-27</td><td style='color:#22c55e'>SELL</td><td>0.70</td><td>7,200</td><td>5,069</td><td>9</td></tr>
+<tr><td>2024-09-27</td><td style='color:#22c55e'>SELL</td><td>0.72</td><td>7,100</td><td>5,098</td><td>10</td></tr>
+<tr><td>2024-09-27</td><td style='color:#22c55e'>SELL</td><td>0.73</td><td>6,900</td><td>5,051</td><td>11</td></tr>
+<tr><td>2024-09-27</td><td style='color:#22c55e'>SELL</td><td>0.75</td><td>6,800</td><td>5,080</td><td>12</td></tr>
+<tr><td>2024-09-30</td><td style='color:#22c55e'>SELL</td><td>0.76</td><td>6,600</td><td>5,029</td><td>13</td></tr>
+<tr><td>2024-09-30</td><td style='color:#22c55e'>SELL</td><td>0.78</td><td>6,500</td><td>5,050</td><td>14</td></tr>
+<tr><td>2024-10-11</td><td style='color:#ef4444'>BUY</td><td>0.79</td><td>6,300</td><td>4,990</td><td>15</td></tr>
+<tr><td>2024-10-15</td><td style='color:#ef4444'>BUY</td><td>0.78</td><td>6,400</td><td>4,973</td><td>14</td></tr>
+<tr><td>2024-10-16</td><td style='color:#ef4444'>BUY</td><td>0.76</td><td>6,500</td><td>4,953</td><td>13</td></tr>
+<tr><td>2024-10-17</td><td style='color:#ef4444'>BUY</td><td>0.75</td><td>6,600</td><td>4,930</td><td>12</td></tr>
+<tr><td>2024-10-18</td><td style='color:#22c55e'>SELL</td><td>0.76</td><td>6,600</td><td>5,029</td><td>13</td></tr>
+<tr><td>2024-10-18</td><td style='color:#22c55e'>SELL</td><td>0.78</td><td>6,500</td><td>5,050</td><td>14</td></tr>
+<tr><td>2024-10-21</td><td style='color:#22c55e'>SELL</td><td>0.79</td><td>6,400</td><td>5,069</td><td>15</td></tr>
+<tr><td>2024-12-23</td><td style='color:#ef4444'>BUY</td><td>0.78</td><td>6,400</td><td>4,973</td><td>14</td></tr>
+<tr><td>2024-12-24</td><td style='color:#22c55e'>SELL</td><td>0.79</td><td>6,400</td><td>5,069</td><td>15</td></tr>
+<tr><td>2025-01-02</td><td style='color:#ef4444'>BUY</td><td>0.76</td><td>6,500</td><td>4,953</td><td>13</td></tr>
+<tr><td>2025-01-02</td><td style='color:#ef4444'>BUY</td><td>0.78</td><td>6,400</td><td>4,973</td><td>14</td></tr>
+<tr><td>2025-01-03</td><td style='color:#ef4444'>BUY</td><td>0.75</td><td>6,600</td><td>4,930</td><td>12</td></tr>
+<tr><td>2025-01-10</td><td style='color:#ef4444'>BUY</td><td>0.73</td><td>6,800</td><td>4,978</td><td>11</td></tr>
+<tr><td>2025-01-14</td><td style='color:#22c55e'>SELL</td><td>0.75</td><td>6,800</td><td>5,080</td><td>12</td></tr>
+<tr><td>2025-01-20</td><td style='color:#22c55e'>SELL</td><td>0.76</td><td>6,600</td><td>5,029</td><td>13</td></tr>
+<tr><td>2025-02-07</td><td style='color:#22c55e'>SELL</td><td>0.78</td><td>6,500</td><td>5,050</td><td>14</td></tr>
+<tr><td>2025-02-19</td><td style='color:#22c55e'>SELL</td><td>0.79</td><td>6,400</td><td>5,069</td><td>15</td></tr>
+<tr><td>2025-03-28</td><td style='color:#ef4444'>BUY</td><td>0.78</td><td>6,400</td><td>4,973</td><td>14</td></tr>
+<tr><td>2025-04-02</td><td style='color:#ef4444'>BUY</td><td>0.76</td><td>6,500</td><td>4,953</td><td>13</td></tr>
+<tr><td>2025-04-07</td><td style='color:#ef4444'>BUY</td><td>0.69</td><td>7,200</td><td>4,968</td><td>8</td></tr>
+<tr><td>2025-04-07</td><td style='color:#ef4444'>BUY</td><td>0.70</td><td>7,100</td><td>4,998</td><td>9</td></tr>
+<tr><td>2025-04-07</td><td style='color:#ef4444'>BUY</td><td>0.72</td><td>6,900</td><td>4,954</td><td>10</td></tr>
+<tr><td>2025-04-07</td><td style='color:#ef4444'>BUY</td><td>0.73</td><td>6,800</td><td>4,978</td><td>11</td></tr>
+<tr><td>2025-04-07</td><td style='color:#ef4444'>BUY</td><td>0.75</td><td>6,600</td><td>4,930</td><td>12</td></tr>
+<tr><td>2025-04-10</td><td style='color:#22c55e'>SELL</td><td>0.70</td><td>7,200</td><td>5,069</td><td>9</td></tr>
+<tr><td>2025-04-11</td><td style='color:#22c55e'>SELL</td><td>0.72</td><td>7,100</td><td>5,098</td><td>10</td></tr>
+<tr><td>2025-05-06</td><td style='color:#22c55e'>SELL</td><td>0.73</td><td>6,900</td><td>5,051</td><td>11</td></tr>
+<tr><td>2025-05-08</td><td style='color:#22c55e'>SELL</td><td>0.75</td><td>6,800</td><td>5,080</td><td>12</td></tr>
+<tr><td>2025-05-12</td><td style='color:#22c55e'>SELL</td><td>0.76</td><td>6,600</td><td>5,029</td><td>13</td></tr>
+<tr><td>2025-05-16</td><td style='color:#ef4444'>BUY</td><td>0.75</td><td>6,600</td><td>4,930</td><td>12</td></tr>
+<tr><td>2025-05-21</td><td style='color:#22c55e'>SELL</td><td>0.76</td><td>6,600</td><td>5,029</td><td>13</td></tr>
+<tr><td>2025-05-23</td><td style='color:#ef4444'>BUY</td><td>0.75</td><td>6,600</td><td>4,930</td><td>12</td></tr>
+<tr><td>2025-05-27</td><td style='color:#ef4444'>BUY</td><td>0.73</td><td>6,800</td><td>4,978</td><td>11</td></tr>
+<tr><td>2025-06-19</td><td style='color:#ef4444'>BUY</td><td>0.72</td><td>6,900</td><td>4,954</td><td>10</td></tr>
+<tr><td>2025-06-24</td><td style='color:#22c55e'>SELL</td><td>0.73</td><td>6,900</td><td>5,051</td><td>11</td></tr>
+<tr><td>2025-06-25</td><td style='color:#22c55e'>SELL</td><td>0.75</td><td>6,800</td><td>5,080</td><td>12</td></tr>
+<tr><td>2025-07-03</td><td style='color:#22c55e'>SELL</td><td>0.76</td><td>6,600</td><td>5,029</td><td>13</td></tr>
+<tr><td>2025-07-10</td><td style='color:#22c55e'>SELL</td><td>0.78</td><td>6,500</td><td>5,050</td><td>14</td></tr>
+<tr><td>2025-07-21</td><td style='color:#22c55e'>SELL</td><td>0.79</td><td>6,400</td><td>5,069</td><td>15</td></tr>
+
+</table>
+
+<h2>📅 月度收益</h2>
+<table>
+  <tr><th>月份</th><th>收益率</th><th>累计净值</th></tr>
+  <tr><td>2024-01</td><td style='color:#ef4444'>-2.61%</td><td>0.9739</td></tr>
+<tr><td>2024-02</td><td style='color:#22c55e'>+2.56%</td><td>0.9988</td></tr>
+<tr><td>2024-03</td><td style='color:#22c55e'>+0.16%</td><td>1.0005</td></tr>
+<tr><td>2024-04</td><td style='color:#22c55e'>+0.03%</td><td>1.0007</td></tr>
+<tr><td>2024-05</td><td style='color:#ef4444'>-0.17%</td><td>0.9990</td></tr>
+<tr><td>2024-06</td><td style='color:#ef4444'>-1.26%</td><td>0.9864</td></tr>
+<tr><td>2024-07</td><td style='color:#22c55e'>+0.35%</td><td>0.9899</td></tr>
+<tr><td>2024-08</td><td style='color:#ef4444'>-0.62%</td><td>0.9837</td></tr>
+<tr><td>2024-09</td><td style='color:#22c55e'>+4.25%</td><td>1.0255</td></tr>
+<tr><td>2024-10</td><td style='color:#22c55e'>+0.43%</td><td>1.0299</td></tr>
+<tr><td>2024-11</td><td style='color:#22c55e'>+0.00%</td><td>1.0300</td></tr>
+<tr><td>2024-12</td><td style='color:#ef4444'>-0.20%</td><td>1.0279</td></tr>
+<tr><td>2025-01</td><td style='color:#22c55e'>+0.13%</td><td>1.0293</td></tr>
+<tr><td>2025-02</td><td style='color:#22c55e'>+0.61%</td><td>1.0356</td></tr>
+<tr><td>2025-03</td><td style='color:#ef4444'>-0.27%</td><td>1.0327</td></tr>
+<tr><td>2025-04</td><td style='color:#ef4444'>-0.71%</td><td>1.0254</td></tr>
+<tr><td>2025-05</td><td style='color:#22c55e'>+0.00%</td><td>1.0254</td></tr>
+<tr><td>2025-06</td><td style='color:#22c55e'>+0.80%</td><td>1.0336</td></tr>
+<tr><td>2025-07</td><td style='color:#22c55e'>+0.75%</td><td>1.0413</td></tr>
+<tr><td>2025-08</td><td style='color:#22c55e'>+0.54%</td><td>1.0470</td></tr>
+<tr><td>2025-09</td><td style='color:#22c55e'>+0.82%</td><td>1.0555</td></tr>
+<tr><td>2025-10</td><td style='color:#ef4444'>-0.03%</td><td>1.0552</td></tr>
+<tr><td>2025-11</td><td style='color:#ef4444'>-0.31%</td><td>1.0520</td></tr>
+<tr><td>2025-12</td><td style='color:#22c55e'>+0.03%</td><td>1.0523</td></tr>
+
+</table>
+
+<footer>
+  Grid Backtest System · Generated by grid-backtest engine ·
+  数据源: efinance
+</footer>
+
+</body>
+</html>

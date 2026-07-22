@@ -1,0 +1,6 @@
+# .understandignore — patterns for files/dirs to exclude from analysis
+# Built-in defaults already exclude node_modules/, .git/, dist/, etc.
+# Add custom patterns below:
+
+# Exclude HTML output reports (auto-generated)
+output/

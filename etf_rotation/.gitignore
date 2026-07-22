@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+.env
+pushplus_config.json

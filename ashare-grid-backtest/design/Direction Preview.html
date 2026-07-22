@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>网格回测 UI · 设计方向速写</title>
+
+<!-- React 18.3.1 + Babel (npmmirror for CN) -->
+<script
+  src="https://registry.npmmirror.com/react/18.3.1/files/umd/react.development.js"
+  integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L"
+  crossorigin="anonymous"
+></script>
+<script
+  src="https://registry.npmmirror.com/react-dom/18.3.1/files/umd/react-dom.development.js"
+  integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm"
+  crossorigin="anonymous"
+></script>
+<script
+  src="https://registry.npmmirror.com/@babel/standalone/7.29.0/files/babel.min.js"
+  integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y"
+  crossorigin="anonymous"
+></script>
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; }
+  body {
+    background: oklch(96% 0.005 240);
+    color: oklch(20% 0 0);
+    font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  }
+  .page { min-height: 100vh; padding: 40px 32px; }
+  .page-header {
+    max-width: 1600px; margin: 0 auto 32px;
+  }
+  .page-header h1 {
+    font-size: 15px; font-weight: 500; color: oklch(35% 0 0);
+    letter-spacing: 0.02em;
+  }
+  .page-header p {
+    font-size: 13px; color: oklch(50% 0 0); margin-top: 6px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+    max-width: 1600px; margin: 0 auto;
+  }
+  @media (max-width: 1200px) { .grid { grid-template-columns: 1fr; } }
+
+  .cell {
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .cell-label {
+    font-size: 12px; font-weight: 600; letter-spacing: 0.06em;
+    text-transform: uppercase; color: oklch(40% 0 0);
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+  }
+  .cell-body {
+    background: white; border: 1px solid oklch(88% 0 0);
+    border-radius: 6px; overflow: hidden;
+    aspect-ratio: 16 / 10;
+    position: relative;
+  }
+  .cell-meta {
+    font-size: 12px; color: oklch(50% 0 0); line-height: 1.6;
+    padding: 0 2px;
+  }
+  .cell-meta strong { color: oklch(25% 0 0); }
+  .vibe { display: flex; gap: 6px; margin-top: 4px; }
+  .vibe-tag {
+    font-size: 10px; font-weight: 500;
+    padding: 2px 8px; border-radius: 3px;
+    background: oklch(94% 0 0); color: oklch(45% 0 0);
+    letter-spacing: 0.03em;
+  }
+</style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script type="text/babel">
+
+// =====================================================
+// Direction A · Swiss Editorial
+// =====================================================
+function SwissPreview() {
+  const swiss = {
+    bg: { background: "oklch(97% 0.005 95)", width: "100%", height: "100%", padding: "24px 28px", display: "flex", flexDirection: "column", gap: "16px", fontFamily: "'Söhne', 'Helvetica Neue', Helvetica, Arial, sans-serif" },
+    header: { display: "flex", justifyContent: "space-between", alignItems: "baseline" },
+    title: { fontSize: "13px", fontWeight: 700, color: "oklch(15% 0 0)", letterSpacing: "0.03em", textTransform: "uppercase" },
+    subtitle: { fontSize: "10px", color: "oklch(50% 0 0)", letterSpacing: "0.04em" },
+    hr: { border: "none", borderTop: "1px solid oklch(85% 0 0)", margin: 0 },
+    metricRow: { display: "flex", gap: "32px" },
+    metric: { display: "flex", flexDirection: "column", gap: "2px" },
+    metricLabel: { fontSize: "9px", color: "oklch(55% 0 0)", textTransform: "uppercase", letterSpacing: "0.05em" },
+    metricVal: { fontSize: "22px", fontWeight: 700, color: "oklch(18% 0 0)", fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em" },
+    metricPct: (c) => ({ fontSize: "10px", color: c, fontWeight: 600 }),
+    chart: { flex: 1, background: "oklch(99% 0 0)", borderRadius: "2px", border: "1px solid oklch(90% 0 0)", position: "relative", overflow: "hidden" },
+    chartLine: { position: "absolute", bottom: "20%", left: "8%", width: "84%", height: "65%", borderBottom: "2px solid oklch(65% 0.18 250)", opacity: 0.8 },
+    chartFill: { position: "absolute", bottom: "20%", left: "8%", width: "84%", height: "65%", background: "linear-gradient(to top, oklch(65% 0.18 250 / 0.08), transparent)" },
+    gridRow: { display: "flex", alignItems: "center", gap: "12px", padding: "6px 0", borderBottom: "1px solid oklch(92% 0 0)" },
+    gridCol: (w) => ({ width: w, fontSize: "10px", color: "oklch(35% 0 0)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }),
+  };
+
+  return (
+    <div style={swiss.bg}>
+      <div style={swiss.header}>
+        <div style={swiss.title}>002036 联创电子 — 网格回测</div>
+        <div style={swiss.subtitle}>2020.01 — 2025.12 · 240日周期 · 11档 · 0.5%步长</div>
+      </div>
+      <div style={swiss.hr} />
+
+      <div style={swiss.metricRow}>
+        {[
+          ["总收益", "+47.2%", "oklch(55% 0.18 170)"],
+          ["夏普比率", "1.62", "oklch(35% 0 0)"],
+          ["最大回撤", "-12.3%", "oklch(45% 0.22 20)"],
+          ["胜率", "56.1%", "oklch(35% 0 0)"],
+          ["交易次数", "347", "oklch(35% 0 0)"],
+        ].map(([label, val, color]) => (
+          <div key={label} style={swiss.metric}>
+            <span style={swiss.metricLabel}>{label}</span>
+            <span style={swiss.metricVal}>{val}</span>
+          </div>
+        ))}
+      </div>
+
+      <div style={swiss.chart}>
+        <div style={swiss.chartFill} />
+        <div style={swiss.chartLine}>
+          <svg width="100%" height="60" style={{position:"absolute",top:-70}}>
+            <polyline fill="none" stroke="oklch(65% 0.18 250)" strokeWidth="2"
+              points="0,60 10,52 20,55 30,48 40,50 50,40 60,42 70,35 80,25 90,18 100,10" />
+          </svg>
+        </div>
+        <div style={{position:"absolute",top:12,left:16,fontSize:9,color:"oklch(60% 0 0)",letterSpacing:"0.04em"}}>权益曲线</div>
+      </div>
+
+      <div>
+        <div style={{fontSize:"9px",color:"oklch(55% 0 0)",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:4}}>最近交易</div>
+        {[
+          ["2025-12-30", "SELL", "12.45", "2,400", "止盈"],
+          ["2025-12-18", "BUY", "11.82", "2,400", "网格触发"],
+          ["2025-12-05", "SELL", "12.10", "2,300", "网格触发"],
+        ].map(([date, action, price, shares, reason]) => (
+          <div key={date} style={swiss.gridRow}>
+            <span style={swiss.gridCol("auto")}>{date}</span>
+            <span style={{...swiss.gridCol("40px"), color: action === "BUY" ? "oklch(55% 0.18 170)" : "oklch(45% 0.22 20)", fontWeight:600, fontSize:10}}>{action}</span>
+            <span style={{...swiss.gridCol("50px"), textAlign:"right"}}>{price}</span>
+            <span style={{...swiss.gridCol("50px"), textAlign:"right"}}>{shares}</span>
+            <span style={{...swiss.gridCol("auto"), color:"oklch(55% 0 0)"}}>{reason}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
+// =====================================================
+// Direction B · Dark Quant Terminal
+// =====================================================
+function QuantPreview() {
+  const q = {
+    bg: { background: "#0d1117", width: "100%", height: "100%", padding: "20px 24px", display: "flex", flexDirection: "column", gap: "14px", fontFamily: "'JetBrains Mono', 'SF Mono', 'Cascadia Code', ui-monospace, monospace" },
+    topBar: { display: "flex", alignItems: "center", gap: "10px" },
+    dot: (c) => ({ width: 8, height: 8, borderRadius: "50%", background: c }),
+    title: { fontSize: "11px", color: "oklch(70% 0 0)", letterSpacing: "0.04em" },
+    status: { fontSize: "10px", color: "#3fb950", marginLeft: "auto" },
+    kpiGrid: { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "1px", background: "#21262d", borderRadius: "3px", overflow: "hidden" },
+    kpi: { background: "#161b22", padding: "12px 14px", display: "flex", flexDirection: "column", gap: "3px" },
+    kpiLabel: { fontSize: "9px", color: "#484f58", textTransform: "uppercase", letterSpacing: "0.06em" },
+    kpiVal: (c) => ({ fontSize: "20px", fontWeight: 600, color: c || "#e6edf3", fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em" }),
+    chartArea: { flex: 1, background: "#161b22", borderRadius: "3px", border: "1px solid #21262d", position: "relative", overflow: "hidden" },
+    chartGrid: { position: "absolute", inset: 0, background: "repeating-linear-gradient(0deg, transparent, transparent 19px, #21262d 19px, #21262d 20px)" },
+    tradeLine: { display: "flex", alignItems: "center", padding: "5px 0", borderBottom: "1px solid #21262d", fontSize: "10px" },
+  };
+
+  return (
+    <div style={q.bg}>
+      <div style={q.topBar}>
+        <div style={q.dot("#3fb950")} /><div style={q.dot("#d2a962")} /><div style={q.dot("#f85149")} />
+        <span style={q.title}>grid-engine :: 002036.SZ 联创电子</span>
+        <span style={q.status}>● LIVE</span>
+      </div>
+
+      <div style={q.kpiGrid}>
+        {[
+          ["TOTAL PnL", "+47.2%", "#3fb950"],
+          ["SHARPE", "1.62", "#e6edf3"],
+          ["MAX DD", "-12.3%", "#f85149"],
+          ["WIN RATE", "56.1%", "#e6edf3"],
+          ["TRADES", "347", "#e6edf3"],
+        ].map(([label, val, color]) => (
+          <div key={label} style={q.kpi}>
+            <span style={q.kpiLabel}>{label}</span>
+            <span style={q.kpiVal(color)}>{val}</span>
+          </div>
+        ))}
+      </div>
+
+      <div style={q.chartArea}>
+        <div style={q.chartGrid} />
+        <svg width="100%" height="100%" style={{position:"absolute",top:0,left:0}}>
+          <polyline fill="none" stroke="#58a6ff" strokeWidth="1.5"
+            points="5,85 15,78 25,82 35,72 45,75 55,63 65,66 75,55 85,42 95,30" />
+        </svg>
+        <div style={{position:"absolute",top:8,left:12,fontSize:9,color:"#484f58",letterSpacing:"0.04em"}}>EQUITY CURVE — {">"} _plot</div>
+      </div>
+
+      <div>
+        <div style={{fontSize:9,color:"#484f58",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6}}>$ trade_log | tail -3</div>
+        {[
+          ["2025-12-30", "SELL", "12.45", "2,400", "tp"],
+          ["2025-12-18", "BUY",  "11.82", "2,400", "grid"],
+          ["2025-12-05", "SELL", "12.10", "2,300", "grid"],
+        ].map(([date, action, price, shares, reason]) => (
+          <div key={date} style={q.tradeLine}>
+            <span style={{color:"#484f58",width:85}}>{date}</span>
+            <span style={{color:action==="BUY"?"#3fb950":"#f85149",width:42,fontWeight:600}}>{action}</span>
+            <span style={{color:"#e6edf3",width:52,textAlign:"right"}}>{price}</span>
+            <span style={{color:"#8b949e",width:52,textAlign:"right"}}>{shares}</span>
+            <span style={{color:"#484f58"}}>// {reason}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
+// =====================================================
+// Direction C · Bento Dashboard
+// =====================================================
+function BentoPreview() {
+  const b = {
+    bg: { background: "oklch(97% 0.002 260)", width: "100%", height: "100%", padding: "20px", display: "flex", flexDirection: "column", gap: "12px", fontFamily: "ui-sans-serif, system-ui, -apple-system, sans-serif" },
+    header: { display: "flex", justifyContent: "space-between", alignItems: "center" },
+    logo: { fontSize: "13px", fontWeight: 700, color: "oklch(25% 0 0)", letterSpacing: "-0.01em" },
+    pill: { fontSize: "10px", padding: "4px 10px", borderRadius: "20px", background: "white", border: "1px solid oklch(90% 0 0)", color: "oklch(45% 0 0)", cursor: "default" },
+    grid: { display: "grid", gridTemplateColumns: "1fr 1fr", gridTemplateRows: "auto auto", gap: "10px", flex: 1 },
+    card: (accent) => ({ background: "white", borderRadius: "10px", padding: "14px", display: "flex", flexDirection: "column", gap: "8px", border: "1px solid oklch(92% 0 0)", borderTop: accent ? `3px solid ${accent}` : "3px solid transparent" }),
+    cardTitle: { fontSize: "10px", fontWeight: 600, color: "oklch(45% 0 0)", textTransform: "uppercase", letterSpacing: "0.04em" },
+    bigNum: (c) => ({ fontSize: "28px", fontWeight: 700, color: c || "oklch(20% 0 0)", letterSpacing: "-0.03em" }),
+    subNum: { fontSize: "10px", color: "oklch(55% 0 0)" },
+    kvRow: { display: "flex", justifyContent: "space-between", fontSize: "10px", padding: "3px 0" },
+    kvLabel: { color: "oklch(55% 0 0)" },
+    kvVal: { color: "oklch(25% 0 0)", fontWeight: 500, fontVariantNumeric: "tabular-nums" },
+    circle: { width: 52, height: 52, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: 700 },
+  };
+
+  return (
+    <div style={b.bg}>
+      <div style={b.header}>
+        <div style={b.logo}>网格回测 · 联创电子</div>
+        <div style={{display:"flex",gap:6}}>
+          {["11档", "0.5%", "240日"].map(t => <span key={t} style={b.pill}>{t}</span>)}
+        </div>
+      </div>
+
+      <div style={b.grid}>
+        {/* 总收益卡片 */}
+        <div style={b.card("oklch(65% 0.2 170)")}>
+          <span style={b.cardTitle}>总收益 · Total Return</span>
+          <span style={b.bigNum("oklch(55% 0.18 170)")}>+47.2%</span>
+          <span style={b.subNum}>2020.01 — 2025.12 · 年化 +8.1%</span>
+          <div style={{display:"flex",gap:16,marginTop:4}}>
+            <span style={{fontSize:10,color:"oklch(55% 0 0)"}}>夏普 <strong style={{color:"oklch(25% 0 0)"}}>1.62</strong></span>
+            <span style={{fontSize:10,color:"oklch(55% 0 0)"}}>回撤 <strong style={{color:"oklch(45% 0.22 20)"}}>-12.3%</strong></span>
+          </div>
+        </div>
+
+        {/* 胜率卡片 */}
+        <div style={b.card("oklch(60% 0.15 250)")}>
+          <span style={b.cardTitle}>胜率 · Win Rate</span>
+          <div style={{display:"flex",alignItems:"center",gap:12}}>
+            <div style={{...b.circle, background:"oklch(93% 0.04 250)", color:"oklch(50% 0.15 250)"}}>56%</div>
+            <div>
+              <div style={{fontSize:10,color:"oklch(55% 0 0)"}}>盈利 195 / 亏损 152</div>
+              <div style={{fontSize:10,color:"oklch(55% 0 0)",marginTop:2}}>共 347 笔交易</div>
+            </div>
+          </div>
+        </div>
+
+        {/* 最近交易卡片 */}
+        <div style={b.card(undefined)}>
+          <span style={b.cardTitle}>最近交易</span>
+          {[
+            ["12-30", "卖出", "12.45", "止盈"],
+            ["12-18", "买入", "11.82", "网格触发"],
+            ["12-05", "卖出", "12.10", "网格触发"],
+          ].map(([date, action, price, reason]) => (
+            <div key={date} style={b.kvRow}>
+              <span style={b.kvLabel}>{date}</span>
+              <span style={{...b.kvVal, color: action==="买入" ? "oklch(55% 0.18 170)" : "oklch(45% 0.22 20)"}}>{action} @ {price}</span>
+              <span style={b.kvLabel}>{reason}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* 权益曲线卡片 */}
+        <div style={{...b.card(undefined), position:"relative", overflow:"hidden"}}>
+          <span style={b.cardTitle}>权益曲线</span>
+          <svg width="100%" height="100%" style={{position:"absolute",top:30,left:0}} viewBox="0 0 200 100" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="bentoGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="oklch(65% 0.18 250 / 0.15)" />
+                <stop offset="100%" stopColor="oklch(65% 0.18 250 / 0.02)" />
+              </linearGradient>
+            </defs>
+            <path d="M0,80 Q30,78 45,72 Q60,65 75,62 Q90,58 100,50 Q110,42 125,35 Q150,25 200,10 L200,100 L0,100 Z" fill="url(#bentoGrad)" />
+            <path d="M0,80 Q30,78 45,72 Q60,65 75,62 Q90,58 100,50 Q110,42 125,35 Q150,25 200,10" fill="none" stroke="oklch(60% 0.18 250)" strokeWidth="2" />
+          </svg>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+// =====================================================
+// Canvas Layout
+// =====================================================
+
+const dirs = [
+  {
+    label: "A · Swiss Editorial",
+    pitch: "Pentagram × Bloomberg — 结构化字体层级，精密数据栅格，off-white 底色，数字说话",
+    flagship: "Pentagram, MIT Press",
+    keywords: ["编辑感", "结构性", "安静"],
+    what: "信息建筑主导：关键数字大号排印，表格用细线分隔，留白是设计元素",
+    Comp: SwissPreview,
+  },
+  {
+    label: "B · Dark Quant Terminal",
+    pitch: "Bloomberg Terminal 血统 — 深色模式，等宽数字，绿/蓝 accent 在深炭底上",
+    flagship: "Bloomberg Terminal, VSCode, Linear",
+    keywords: ["代码感", "密集", "冰冷"],
+    what: "极客风：monospace 字体，terminal 指令式操作，高数据密度，为专业量化交易者设计",
+    Comp: QuantPreview,
+  },
+  {
+    label: "C · Bento Dashboard",
+    pitch: "现代仪表盘 — 圆角卡片，柔和阴影，bento 栅格，数据可视化友好",
+    flagship: "Apple Health, Linear, Vercel Analytics",
+    keywords: ["亲和", "卡片式", "现代"],
+    what: "消费者级金融感：圆角 widget、彩色 accent 条、大数字 + 优雅留白，散户友好",
+    Comp: BentoPreview,
+  },
+];
+
+function App() {
+  return (
+    <div className="page">
+      <div className="page-header">
+        <h1>A 股网格回测 UI · 设计方向速写</h1>
+        <p>三个差异化方向，挑一个方向（或混合），然后我进入高保真实施。</p>
+      </div>
+      <div className="grid">
+        {dirs.map((d) => (
+          <div className="cell" key={d.label}>
+            <div className="cell-label">{d.label}</div>
+            <div className="cell-body"><d.Comp /></div>
+            <div className="cell-meta">
+              <strong>{d.pitch}</strong><br />
+              旗舰：{d.flagship}<br />
+              对本项目意味着：{d.what}
+              <div className="vibe">
+                {d.keywords.map((k) => <span className="vibe-tag" key={k}>{k}</span>)}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

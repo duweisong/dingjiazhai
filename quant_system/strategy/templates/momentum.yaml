@@ -1,0 +1,32 @@
+name: "Momentum Strategy"
+version: "1.0"
+description: "Cross-sectional momentum strategy across HS300 stocks"
+
+universe_filter: "hs300"
+
+factor_exposures:
+  momentum_20d: 0.3
+  momentum_60d: 0.4
+  momentum_120d: 0.3
+
+signal_weights:
+  momentum_composite: 1.0
+
+regime_gating:
+  bear: "off"
+  bull: "active"
+  neutral: "active"
+
+constraints:
+  max_weight: 0.10
+  min_positions: 5
+  max_positions: 20
+
+stop_loss_pct: 0.08
+take_profit_pct: 0.25
+trailing_stop_pct: 0.06
+max_single_position: 0.10
+max_sector_exposure: 0.30
+rebalance_freq: "weekly"
+position_method: "signal_strength"
+min_signal_strength: 0.3

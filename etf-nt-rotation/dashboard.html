@@ -1,0 +1,476 @@
+<!--
+──────────────────────────────────────────────────
+  ETF 国家队轮动 · Bloomberg 终端风格仪表盘
+──────────────────────────────────────────────────
+  设计方向: Bloomberg Terminal 高密度金融数据终端
+  设计理由: 量化策略需要精确、高密度、专业感。
+            Bloomberg 暗底 + 琥珀绿/红涨跌 +
+            等宽数据 + 网格布局 = 交易员熟悉的范式。
+  上下文: 连接 localhost:8765 API 服务器获取实时数据。
+──────────────────────────────────────────────────
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ETF NT Rotation · Terminal</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+/* ═══════════════════════════════════════════════
+   BLOOMBERG TERMINAL DESIGN SYSTEM
+   ═══════════════════════════════════════════════ */
+:root {
+  --bg:       #0a0a0c;
+  --surface:  #111115;
+  --border:   #222228;
+  --grid:     #1a1a1e;
+  --text:     #c8c8cc;
+  --text-dim: #6a6a70;
+  --text-brt: #e8e8ec;
+  --amber:    #f0a030;
+  --green:    #2ea043;
+  --red:      #e04040;
+  --blue:     #4a90d9;
+  --cyan:     #30b0b0;
+  --white:    #e8e8ec;
+  --fn-key:   #332210;
+  --fn-hover: #443018;
+  --fn-active:#553820;
+  font-family: 'Cascadia Code','Consolas','SF Mono','Menlo',monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);min-height:100vh;overflow-x:hidden}
+
+/* ═══ TOP STATUS BAR ═══ */
+#topbar{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  height:26px;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:0;
+  font-size:11px;color:var(--text-dim);
+  padding:0 10px;
+}
+#topbar .item{padding:0 12px;border-right:1px solid var(--border);white-space:nowrap}
+#topbar .item:last-child{border-right:none}
+#topbar .conn{color:var(--green)}
+#topbar .conn.off{color:var(--red)}
+#topbar .conn .blink{animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+#topbar .label{color:var(--text-dim);margin-right:4px}
+#topbar .value{color:var(--text)}
+#topbar .up{color:var(--green)} #topbar .down{color:var(--red)}
+
+/* ═══ FUNCTION KEY BAR ═══ */
+#fnbar{
+  position:fixed;top:26px;left:0;right:0;z-index:99;
+  height:28px;
+  background:#0d0d10;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:stretch;gap:0;
+  padding:0 4px;
+}
+#fnbar button{
+  flex:1;max-width:160px;
+  background:var(--fn-key);border:1px solid #2a1a08;
+  border-bottom:2px solid #3a2810;
+  color:var(--text-dim);font-family:inherit;font-size:10px;
+  cursor:pointer;transition:.12s;
+  text-align:center;padding:2px 6px;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  gap:0px;letter-spacing:.5px;
+}
+#fnbar button .key{font-size:13px;font-weight:700;color:var(--amber)}
+#fnbar button .lbl{font-size:9px;color:var(--text-dim)}
+#fnbar button:hover{background:var(--fn-hover);color:var(--amber)}
+#fnbar button.active{background:var(--fn-active);border-color:#5a4020;color:var(--amber)}
+#fnbar button.active .lbl{color:var(--amber)}
+
+/* ═══ MAIN CONTENT ═══ */
+#main{
+  margin-top:54px;
+  padding:16px 20px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  grid-template-rows:auto auto 1fr;
+  gap:12px;
+  min-height:calc(100vh - 54px);
+}
+.panel{
+  background:var(--surface);
+  border:1px solid var(--border);
+  position:relative;
+}
+.panel.full{grid-column:1/-1}
+.panel-header{
+  background:#0d0d10;
+  border-bottom:1px solid var(--border);
+  padding:5px 10px;
+  display:flex;align-items:center;gap:8px;
+  font-size:10px;text-transform:uppercase;letter-spacing:1px;
+  color:var(--text-dim);
+}
+.panel-header .title{color:var(--text-brt);font-weight:600}
+.panel-header .dot{width:5px;height:5px;border-radius:50%;display:inline-block}
+.panel-header .dot.green{background:var(--green)}
+.panel-header .dot.amber{background:var(--amber)}
+.panel-body{padding:10px 12px;overflow:auto}
+
+/* ═══ METRICS GRID ═══ */
+.metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.metric{
+  background:var(--bg);border:1px solid var(--grid);
+  padding:10px 12px;text-align:center;
+}
+.metric .val{font-size:20px;font-weight:700;letter-spacing:-1px}
+.metric .val.up{color:var(--green)} .metric .val.down{color:var(--red)} .metric .val.neutral{color:var(--amber)}
+.metric .lbl{font-size:9px;color:var(--text-dim);margin-top:2px;text-transform:uppercase;letter-spacing:.5px}
+
+/* ═══ TABLES ═══ */
+table{width:100%;border-collapse:collapse}
+thead th{
+  background:var(--bg);color:var(--text-dim);
+  font-size:9px;text-transform:uppercase;letter-spacing:.8px;
+  padding:5px 8px;border-bottom:2px solid var(--border);
+  text-align:left;font-weight:600;position:sticky;top:0;
+}
+tbody td{padding:4px 8px;border-bottom:1px solid var(--grid);font-size:11px}
+tbody tr:hover td{background:rgba(240,160,48,.03)}
+.high{color:var(--amber);font-weight:700}
+.up{color:var(--green)} .dn{color:var(--red)}
+
+/* ═══ CHART ═══ */
+.chart-w{position:relative;height:280px}
+.chart-w canvas{width:100%!important;height:100%!important}
+
+/* ═══ COMPONENTS ═══ */
+.loading{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--text-dim);gap:8px;font-size:11px}
+.spinner{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--amber);border-radius:50%;animation:spin .5s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error{background:rgba(224,64,64,.06);border:1px solid rgba(224,64,64,.15);padding:12px 16px;color:var(--red);font-size:11px;white-space:pre-wrap}
+.btn{font-family:inherit;font-size:10px;padding:6px 14px;background:var(--bg);border:1px solid var(--border);color:var(--text);cursor:pointer;transition:.12s;text-transform:uppercase;letter-spacing:.5px}
+.btn:hover{background:var(--grid);border-color:#444}
+.btn.primary{background:#2a1a08;border-color:var(--amber);color:var(--amber)}
+.btn.primary:hover{background:#3a2810}
+.btn.small{padding:3px 8px;font-size:9px}
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:1100px){#main{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:600px){.metrics{grid-template-columns:repeat(2,1fr)}#fnbar button .lbl{display:none}}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+     TOP STATUS BAR
+     ═══════════════════════════════════════════════ -->
+<div id="topbar">
+  <span class="item conn" id="connStatus"><span class="blink">█</span> CONNECTING</span>
+  <span class="item"><span class="label">Strategy</span><span class="value">NT-Rotation v3.0</span></span>
+  <span class="item"><span class="label">API</span><span class="value" id="topUrl">localhost:8765</span></span>
+  <span class="item"><span class="label">Mode</span><span class="value" id="topMode">IDLE</span></span>
+  <span class="item" id="topTime" style="margin-left:auto;border-right:none">--</span>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     FUNCTION KEY BAR (Bloomberg-style F1-F6)
+     ═══════════════════════════════════════════════ -->
+<div id="fnbar">
+  <button class="active" data-panel="backtest" onclick="switchPanel('backtest')">
+    <span class="key">F1</span><span class="lbl">Backtest</span>
+  </button>
+  <button data-panel="optimize" onclick="switchPanel('optimize')">
+    <span class="key">F2</span><span class="lbl">Optimize</span>
+  </button>
+  <button data-panel="signal" onclick="switchPanel('signal')">
+    <span class="key">F3</span><span class="lbl">Signal</span>
+  </button>
+  <button data-panel="etfdata" onclick="switchPanel('etfdata')">
+    <span class="key">F4</span><span class="lbl">ETF Data</span>
+  </button>
+  <button data-panel="ntdata" onclick="switchPanel('ntdata')">
+    <span class="key">F5</span><span class="lbl">NT Position</span>
+  </button>
+  <button data-panel="spec" onclick="switchPanel('spec')">
+    <span class="key">F6</span><span class="lbl">Spec</span>
+  </button>
+  <span style="flex:1;display:flex;align-items:center;justify-content:flex-end;padding-right:12px;font-size:10px;color:var(--text-dim)" id="fnHint">F1-F6: Switch panel</span>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     MAIN GRID
+     ═══════════════════════════════════════════════ -->
+<div id="main">
+  <div class="loading" style="grid-column:1/-1;grid-row:1/-1;font-size:14px">
+    <span class="spinner"></span> INITIALIZING CONNECTION...
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════
+   CONFIGURATION
+   ═══════════════════════════════════════════════ */
+const API='http://localhost:8765';
+let currentPanel='backtest';
+let serverOnline=false;
+let activeChart=null;
+
+/* ═══════════════════════════════════════════════
+   SERVER CONNECTION
+   ═══════════════════════════════════════════════ */
+function updateClock(){document.getElementById('topTime').textContent=new Date().toLocaleString('zh-CN',{hour12:false})}
+setInterval(updateClock,1000);updateClock();
+
+function showServerDown(){
+  document.getElementById('main').innerHTML=`
+    <div style="grid-column:1/-1;grid-row:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;color:var(--text-dim)">
+      <div style="font-size:48px;color:var(--red)">&#9679;</div>
+      <div style="font-size:16px;color:var(--text)">API SERVER NOT RUNNING</div>
+      <div style="font-size:12px;text-align:center;line-height:1.8">
+        Start the server before using the dashboard:<br>
+        <code style="background:var(--bg);padding:4px 12px;border:1px solid var(--border);display:inline-block;margin-top:8px">
+          python etf-nt-rotation\\scripts\\dashboard_server.py
+        </code>
+      </div>
+      <button class="btn primary" onclick="initConnection()" style="margin-top:8px">RETRY CONNECTION</button>
+    </div>`;
+  document.getElementById('connStatus').className='item conn off';
+  document.getElementById('connStatus').innerHTML='&#9679; DISCONNECTED';
+  document.getElementById('topMode').textContent='OFFLINE';
+}
+
+async function checkServer(){
+  const ctrl=new AbortController();
+  const tid=setTimeout(()=>ctrl.abort(),3000);
+  try{
+    const r=await fetch(API+'/api/ping',{signal:ctrl.signal});
+    clearTimeout(tid);
+    if(r.ok){
+      serverOnline=true;
+      document.getElementById('connStatus').className='item conn';
+      document.getElementById('connStatus').innerHTML='<span class="blink">&#9610;</span> CONNECTED';
+      document.getElementById('topMode').textContent='READY';
+      return true;
+    }
+  }catch(e){clearTimeout(tid)}
+  serverOnline=false;
+  showServerDown();
+  return false;
+}
+
+async function initConnection(){
+  document.getElementById('main').innerHTML='<div class="loading" style="grid-column:1/-1;grid-row:1/-1"><span class="spinner"></span> CONNECTING...</div>';
+  const ok=await checkServer();
+  if(ok) switchPanel(currentPanel);
+}
+
+/* ═══════════════════════════════════════════════
+   PANEL SWITCHING
+   ═══════════════════════════════════════════════ */
+async function switchPanel(name){
+  if(!serverOnline){return}
+  currentPanel=name;
+  document.querySelectorAll('#fnbar button').forEach(b=>b.classList.remove('active'));
+  document.querySelector(`#fnbar [data-panel="${name}"]`)?.classList.add('active');
+  document.getElementById('topMode').textContent=name.toUpperCase();
+  buildPanel(name);
+}
+
+/* ═══════════════════════════════════════════════
+   API HELPER
+   ═══════════════════════════════════════════════ */
+async function api(path,opts={}){const r=await fetch(API+path,opts);return r.json()}
+
+/* ═══════════════════════════════════════════════
+   PANEL BUILDERS
+   ═══════════════════════════════════════════════ */
+function panel(title,dot){return`<div class="panel-header"><span class="dot ${dot||'green'}"></span><span class="title">${title}</span></div>`}
+
+function mCard(label,value,cls){
+  return`<div class="metric"><div class="val ${cls}">${value}</div><div class="lbl">${label}</div></div>`
+}
+
+function tbl(headers,rows){
+  let h='<table><thead><tr>';
+  headers.forEach(hd=>h+=`<th>${hd}</th>`);
+  h+='</tr></thead><tbody>';
+  rows.forEach((row,i)=>{
+    h+='<tr>';
+    row.forEach((cell,j)=>h+=`<td>${cell}</td>`);
+    h+='</tr>';
+  });
+  h+='</tbody></table>';
+  return h;
+}
+
+async function buildPanel(name){
+  const m=document.getElementById('main');
+  m.innerHTML='<div class="loading" style="grid-column:1/-1;grid-row:1/-1"><span class="spinner"></span> LOADING...</div>';
+
+  try{
+    if(name==='backtest'){
+      const d=await api('/api/backtest');
+      if(d.error){m.innerHTML=`<div class="error" style="grid-column:1/-1">${d.error}</div>`;return}
+      const mt=d.metrics;
+      m.innerHTML=
+        `<div class="panel full">${panel('PERFORMANCE METRICS','green')}<div class="panel-body"><div class="metrics">`
+        +mCard('CAGR',(mt.cagr*100).toFixed(1)+'%',mt.cagr>=0.15?'up':(mt.cagr>=0?'neutral':'down'))
+        +mCard('SHARPE',mt.sharpe.toFixed(2),mt.sharpe>=0.8?'up':(mt.sharpe>=0.4?'neutral':'down'))
+        +mCard('MAX DD',(mt.max_drawdown*100).toFixed(1)+'%',mt.max_drawdown>-0.2?'up':(mt.max_drawdown>-0.35?'neutral':'down'))
+        +mCard('CALMAR',mt.calmar.toFixed(2),mt.calmar>=0.6?'up':(mt.calmar>=0.3?'neutral':'down'))
+        +mCard('WIN RATE',(mt.win_rate_monthly*100).toFixed(1)+'%',mt.win_rate_monthly>=0.45?'up':'neutral')
+        +mCard('TOTAL',(mt.total_return*100).toFixed(1)+'%',mt.total_return>=0?'up':'down')
+        +`</div></div></div>`
+
+        +`<div class="panel" style="grid-column:1/-1">${panel('EQUITY CURVE','green')}<div class="panel-body"><div class="chart-w"><canvas id="navChart"></canvas></div></div></div>`
+
+        +(d.annual&&d.annual.length?`<div class="panel">${panel('ANNUAL RETURNS','green')}<div class="panel-body">`
+          +tbl(['Year','Return'],d.annual.map(a=>[a.year,`<span class="${a.ret>=0?'up':'dn'}">${(a.ret*100).toFixed(1)}%</span>`]))
+          +`</div></div>`:'')
+
+        +`<div class="panel">${panel('CONFIG','green')}<div class="panel-body" style="font-size:11px;color:var(--text-dim)">`
+        +`<div>PARAMS: 50/50 Weight | 14d Momentum | Top10 &rarr; 5 ETFs | Equal Weight</div>`
+        +`<div style="margin-top:4px">PERIOD: ${d.months} months | ${d.trades} trades | ${d.config}</div>`
+        +`</div></div>`;
+
+      if(d.nav_dates) setTimeout(()=>{
+        if(activeChart) activeChart.destroy();
+        activeChart=new Chart(document.getElementById('navChart'),{
+          type:'line',data:{labels:d.nav_dates,datasets:[
+            {label:'Strategy',data:d.nav_values,borderColor:'#f0a030',backgroundColor:'rgba(240,160,48,.06)',borderWidth:1.5,pointRadius:0,tension:.1},
+            {label:'Benchmark',data:d.bench_values,borderColor:'#6a6a70',borderWidth:1,pointRadius:0,tension:.1},
+          ]},
+          options:{responsive:true,maintainAspectRatio:false,
+            plugins:{legend:{labels:{color:'#6a6a70',usePointStyle:true,boxWidth:6,font:{family:'monospace',size:10}}}},
+            scales:{
+              x:{ticks:{color:'#4a4a50',maxTicksLimit:12,font:{size:9}},grid:{color:'#1a1a1e'}},
+              y:{ticks:{color:'#4a4a50',font:{size:9},callback:v=>v.toFixed(2)},grid:{color:'#1a1a1e'}},
+            },
+          },
+        });
+      },100);
+
+    }else if(name==='optimize'){
+      m.innerHTML='<div class="loading" style="grid-column:1/-1;grid-row:1/-1"><span class="spinner"></span> GRID SEARCH (108 combos, ~30s)...</div>';
+      const d=await api('/api/optimize',{method:'POST'});
+      if(d.error){m.innerHTML=`<div class="error" style="grid-column:1/-1">${d.error}</div>`;return}
+      if(!d.results||!d.results.length){m.innerHTML=`<div class="error" style="grid-column:1/-1">NO RESULTS</div>`;return}
+      m.innerHTML=`<div class="panel full">${panel('OPTIMIZATION RESULTS · TOP 15','amber')}<div class="panel-body">`
+        +tbl(['#','Score','CAGR','Sharpe','MaxDD','Calmar','WinRate','Parameters'],
+          d.results.map((r,i)=>[
+            `#${i+1}`,
+            `<span class="high">${r.score.toFixed(4)}</span>`,
+            `<span class="${r.cagr>=0.2?'up':(r.cagr>=0.1?'':'dn')}">${(r.cagr*100).toFixed(1)}%</span>`,
+            r.sharpe.toFixed(2),
+            `${(r.max_dd*100).toFixed(1)}%`,
+            r.calmar.toFixed(2),
+            `${(r.month_wr*100).toFixed(1)}%`,
+            `<span style="color:var(--text-dim)">${r.config}</span>`,
+          ]))
+        +`</div></div>`;
+
+    }else if(name==='signal'){
+      const d=await api('/api/live-signal');
+      if(d.error){m.innerHTML=`<div class="error" style="grid-column:1/-1">${d.error}</div>`;return}
+      m.innerHTML=
+        `<div class="panel">${panel(`ACTIVE POSITIONS · ${d.date}`,'amber')}<div class="panel-body">`
+        +tbl(['#','Code','Name','Sector','Score','Weight'],
+          d.selected.map((e,i)=>[`<span class="high">#${i+1}</span>`,e.code,`<b>${e.name}</b>`,e.sector,e.score.toFixed(4),`<span class="high">${e.weight}</span>`]))
+        +`</div></div>`
+
+        +`<div class="panel">${panel('TOP 15 RANKING','green')}<div class="panel-body">`
+        +tbl(['Rank','Code','Name','Sector','Score'],
+          d.ranking.map(r=>[r.selected?`<span class="high">&diams; #${r.rank}</span>`:`#${r.rank}`,r.code,r.name,r.sector,r.score.toFixed(4)]))
+        +`</div></div>`
+
+        +`<div class="panel full" style="font-size:10px;color:var(--text-dim);padding:6px 12px">`
+        +`GENERATED: ${d.generated_at} | DATA: ${d.data_info.etfs} ETFs | RANGE: ${d.data_info.range}`
+        +`</div>`;
+
+    }else if(name==='etfdata'){
+      const d=await api('/api/etf-data');
+      if(!d.exists){m.innerHTML=`<div class="error" style="grid-column:1/-1">${d.error||'DATA FILE NOT FOUND'}</div>`;return}
+      m.innerHTML=
+        `<div class="panel full">${panel('ETF DATA PIPELINE','green')}<div class="panel-body"><div class="metrics">`
+        +mCard('PASS RATE',`${d.ok}/${d.total}`,d.ok>=30?'up':'down')
+        +mCard('TRADING DAYS',d.days,'neutral')
+        +mCard('DATE RANGE',d.date_range||'N/A','neutral')
+        +`</div>`
+        +(d.missing&&d.missing.length?`<div style="margin-top:8px;color:var(--red);font-size:10px">MISSING: ${d.missing.join(', ')}</div>`:'')
+        +`<button class="btn primary" onclick="refreshETF()" style="margin-top:10px">REFRESH DATA (~10s)</button>`
+        +`</div></div>`;
+
+    }else if(name==='ntdata'){
+      const d=await api('/api/nt-data');
+      if(!d.exists){m.innerHTML=`<div class="error" style="grid-column:1/-1">${d.error||'DATA FILE NOT FOUND'}</div>`;return}
+      m.innerHTML=
+        `<div class="panel full">${panel('NATIONAL TEAM POSITION','amber')}<div class="panel-body"><div class="metrics">`
+        +mCard('PREDICTED POS',(d.predicted_position*100).toFixed(0)+'%',d.predicted_position>0.6?'up':(d.predicted_position>0.3?'neutral':'down'))
+        +mCard('ACTUAL (LAG)',(d.actual_position*100).toFixed(0)+'%','neutral')
+        +mCard('SIGNAL',d.signal||'N/A',d.signal==='BUY'?'up':(d.signal==='SELL'?'down':'neutral'))
+        +mCard('QUARTERS',d.holdings_quarters+'Q','neutral')
+        +`</div></div></div>`
+
+        +`<div class="panel">${panel('DETAILS','green')}<div class="panel-body">`
+        +tbl(['Field','Value'],[
+          ['Predicted Conviction',(d.predicted_conviction>=0?'+':'')+d.predicted_conviction.toFixed(4)],
+          ['Actual Conviction',(d.actual_conviction>=0?'+':'')+d.actual_conviction.toFixed(4)+` (${d.latest_quarter||'N/A'})`],
+          ['Generated',d.date||'N/A'],
+          ...(d.top_factors?[['Top Factors',Object.entries(d.top_factors).map(([k,v])=>`${k}=${v.toFixed(4)}`).join(' | ')]]:[]),
+        ])
+        +`</div></div>`
+
+        +`<div class="panel"><div class="panel-body" style="display:flex;align-items:center;justify-content:center;height:100%">`
+        +`<button class="btn primary" onclick="refreshNT()">REFRESH PREDICTION</button>`
+        +`</div></div>`;
+
+    }else if(name==='spec'){
+      const d=await api('/api/spec');
+      if(d.error){m.innerHTML=`<div class="error" style="grid-column:1/-1">${d.error}</div>`;return}
+      m.innerHTML=`<div class="panel full">${panel('STRATEGY SPECIFICATION','green')}<div class="panel-body">`
+        +tbl(['Parameter','Value'],Object.entries(d).map(([k,v])=>[k,v]))
+        +`</div></div>`;
+    }
+  }catch(e){
+    serverOnline=false;
+    document.getElementById('connStatus').className='item conn off';
+    document.getElementById('connStatus').innerHTML='&#9679; DISCONNECTED';
+    document.getElementById('topMode').textContent='ERROR';
+    showServerDown();
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   REFRESH ACTIONS
+   ═══════════════════════════════════════════════ */
+async function refreshETF(){
+  document.getElementById('main').innerHTML='<div class="loading" style="grid-column:1/-1;grid-row:1/-1"><span class="spinner"></span> FETCHING ETF DATA (~10s)...</div>';
+  await api('/api/etf-data?refresh=1');switchPanel('etfdata');
+}
+async function refreshNT(){
+  document.getElementById('main').innerHTML='<div class="loading" style="grid-column:1/-1;grid-row:1/-1"><span class="spinner"></span> REFRESHING PREDICTION...</div>';
+  await api('/api/nt-data?refresh=1');switchPanel('ntdata');
+}
+
+/* ═══════════════════════════════════════════════
+   KEYBOARD SHORTCUTS
+   ═══════════════════════════════════════════════ */
+document.addEventListener('keydown',e=>{
+  const map={F1:'backtest',F2:'optimize',F3:'signal',F4:'etfdata',F5:'ntdata',F6:'spec'};
+  if(map[e.key]){e.preventDefault();switchPanel(map[e.key])}
+});
+
+/* ═══════════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════════ */
+initConnection();
+setInterval(async()=>{
+  if(!serverOnline) await checkServer();
+},15000);
+</script>
+</body>
+</html>

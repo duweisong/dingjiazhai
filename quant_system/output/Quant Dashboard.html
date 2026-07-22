@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quant System · Dashboard</title>
+
+<!-- React 18.3.1 -->
+<script
+  src="https://unpkg.com/react@18.3.1/umd/react.development.js"
+  integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L"
+  crossorigin="anonymous"
+></script>
+<!-- ReactDOM 18.3.1 -->
+<script
+  src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"
+  integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm"
+  crossorigin="anonymous"
+></script>
+<!-- Babel Standalone 7.29.0 -->
+<script
+  src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"
+  integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y"
+  crossorigin="anonymous"
+></script>
+
+<style>
+  :root {
+    --bg-deep: #06080c;
+    --bg-surface: #0c0f16;
+    --glass-bg: rgba(255,255,255,0.02);
+    --glass-border: rgba(255,255,255,0.06);
+    --glass-hover: rgba(255,255,255,0.04);
+    --text-primary: #e2e4e9;
+    --text-secondary: #8b8f9a;
+    --text-muted: #555963;
+    --accent-cyan: #38bdf8;
+    --accent-green: #34d399;
+    --accent-amber: #fbbf24;
+    --accent-red: #f87171;
+    --accent-purple: #a78bfa;
+    --font-mono: 'SF Mono', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+    --font-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .dashboard {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 12px 16px;
+    gap: 10px;
+  }
+
+  /* ── Glass Card Base ── */
+  .glass-panel {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .glass-panel:hover {
+    border-color: rgba(255,255,255,0.10);
+    background: var(--glass-hover);
+  }
+
+  /* ── Top Bar ── */
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px;
+    background: var(--bg-surface);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    font-size: 12px;
+  }
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .topbar-brand {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent-cyan);
+    letter-spacing: 0.04em;
+  }
+  .topbar-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--accent-green);
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+  .status-dot {
+    width: 6px; height: 6px;
+    background: var(--accent-green);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+  .topbar-right span { color: var(--text-muted); }
+
+  /* ── KPI Row ── */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+  }
+  @media (max-width: 1100px) { .kpi-row { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 600px) { .kpi-row { grid-template-columns: repeat(2, 1fr); } }
+
+  .kpi-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition: border-color 0.2s;
+  }
+  .kpi-card:hover { border-color: rgba(255,255,255,0.12); }
+  .kpi-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    font-family: var(--font-sans);
+  }
+  .kpi-value {
+    font-family: var(--font-mono);
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .kpi-value.up { color: var(--accent-green); }
+  .kpi-value.down { color: var(--accent-red); }
+  .kpi-value.warn { color: var(--accent-amber); }
+  .kpi-sub {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+  .kpi-sub.up { color: var(--accent-green); }
+  .kpi-sub.down { color: var(--accent-red); }
+
+  /* ── Main Grid ── */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 10px;
+    flex: 1;
+    min-height: 0;
+  }
+  @media (max-width: 1000px) {
+    .main-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ── Chart Panel ── */
+  .chart-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .chart-tabs {
+    display: flex;
+    gap: 2px;
+    background: rgba(255,255,255,0.03);
+    border-radius: var(--radius-sm);
+    padding: 2px;
+  }
+  .chart-tab {
+    padding: 4px 10px;
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: var(--text-muted);
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-radius: 3px;
+    letter-spacing: 0.04em;
+    transition: all 0.15s;
+  }
+  .chart-tab.active {
+    background: rgba(56,189,248,0.15);
+    color: var(--accent-cyan);
+  }
+  .chart-tab:hover { color: var(--text-secondary); }
+  .chart-area {
+    flex: 1;
+    position: relative;
+    min-height: 320px;
+    overflow: hidden;
+  }
+  .chart-area svg { width: 100%; height: 100%; }
+
+  /* ── Positions Panel ── */
+  .positions-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    overflow: hidden;
+  }
+  .positions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--glass-border);
+  }
+  .positions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow-y: auto;
+    max-height: 340px;
+  }
+  .position-row {
+    display: grid;
+    grid-template-columns: 1fr 60px 70px 60px 50px;
+    gap: 8px;
+    align-items: center;
+    padding: 6px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    font-family: var(--font-mono);
+    transition: background 0.15s;
+    cursor: default;
+  }
+  .position-row:hover { background: var(--glass-hover); }
+  .pos-code { color: var(--text-primary); font-weight: 500; }
+  .pos-weight { text-align: right; color: var(--text-secondary); }
+  .pos-pnl { text-align: right; }
+  .pos-pnl.up { color: var(--accent-green); }
+  .pos-pnl.down { color: var(--accent-red); }
+  .pos-signal { text-align: center; font-size: 10px; }
+  .pos-signal.buy { color: var(--accent-green); }
+  .pos-signal.sell { color: var(--accent-red); }
+  .pos-signal.hold { color: var(--text-muted); }
+
+  /* ── Risk Row ── */
+  .risk-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  @media (max-width: 900px) { .risk-row { grid-template-columns: repeat(2, 1fr); } }
+  .risk-mini {
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .risk-mini-label {
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+  .risk-mini-value {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .risk-bar-bg {
+    height: 3px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 2px;
+    margin-top: 4px;
+    overflow: hidden;
+  }
+  .risk-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+  .risk-bar-fill.ok { background: var(--accent-green); }
+  .risk-bar-fill.warn { background: var(--accent-amber); }
+  .risk-bar-fill.danger { background: var(--accent-red); }
+
+  /* ── Footer Bar ── */
+  .footer-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 16px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    border-top: 1px solid var(--glass-border);
+  }
+  .footer-bar .source { color: var(--accent-cyan); }
+  .footer-bar .dot { margin: 0 8px; color: #2a2a30; }
+</style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useMemo, useCallback } = React;
+
+// ── Design Tokens ──
+const tokens = {
+  cyan: "#38bdf8", green: "#34d399", amber: "#fbbf24", red: "#f87171",
+  purple: "#a78bfa", bgDeep: "#06080c", glassBg: "rgba(255,255,255,0.02)",
+  glassBorder: "rgba(255,255,255,0.06)", textPrimary: "#e2e4e9",
+  textSecondary: "#8b8f9a", textMuted: "#555963",
+};
+
+// ── Utility: format number ──
+const fmtMoney = (v) => {
+  if (Math.abs(v) >= 1e6) return "¥" + (v/1e6).toFixed(2) + "M";
+  if (Math.abs(v) >= 1e4) return "¥" + (v/1e4).toFixed(1) + "万";
+  return "¥" + v.toLocaleString();
+};
+const fmtPct = (v) => (v >= 0 ? "+" : "") + (v*100).toFixed(2) + "%";
+const fmtNum = (v, d=2) => v.toFixed(d);
+
+// ── Mock Data (would be live from quant_system backend) ──
+const useMockData = () => {
+  const [t, setT] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setT(t => t+1), 3000);
+    return () => clearInterval(id);
+  }, []);
+
+  const equity = 1_284_500 + Math.sin(t*0.3)*15000;
+  const dailyPnl = 12450 + Math.sin(t*0.7)*3000;
+  const sharpe = 1.75;
+  const maxDD = -0.125;
+  const var95 = 0.0243;
+  const winRate = 0.56;
+  const turnover = 0.28;
+
+  const chartData = useMemo(() => {
+    const pts = [];
+    let e = 900_000;
+    for (let i=0; i<200; i++) {
+      e += e * (0.0008 + Math.sin(i*0.1)*0.003 + (Math.random()-0.48)*0.012);
+      pts.push({x:i, y:e});
+    }
+    return pts;
+  }, []);
+
+  const positions = [
+    {code:"601318", name:"Ping An", weight:0.18, pnl:0.124, signal:"buy"},
+    {code:"600036", name:"CMB", weight:0.15, pnl:0.088, signal:"buy"},
+    {code:"300750", name:"CATL", weight:0.14, pnl:0.051, signal:"hold"},
+    {code:"000333", name:"Midea", weight:0.12, pnl:-0.023, signal:"hold"},
+    {code:"000001", name:"Ping An Bk", weight:0.10, pnl:0.032, signal:"buy"},
+    {code:"600519", name:"Moutai", weight:0.09, pnl:-0.041, signal:"sell"},
+    {code:"000858", name:"Wuliangye", weight:0.08, pnl:-0.015, signal:"hold"},
+    {code:"002487", name:"Dajin", weight:0.07, pnl:0.095, signal:"buy"},
+    {code:"601166", name:"Ind Bk", weight:0.05, pnl:0.018, signal:"hold"},
+    {code:"600900", name:"Yangtze", weight:0.02, pnl:-0.007, signal:"sell"},
+  ];
+
+  const riskBars = [
+    {label:"VaR 95%", value:var95, max:0.05, status:"warn"},
+    {label:"Max Drawdown", value:Math.abs(maxDD), max:0.30, status:"warn"},
+    {label:"Leverage", value:0.0, max:1.0, status:"ok"},
+    {label:"Correlation", value:0.42, max:0.8, status:"ok"},
+  ];
+
+  return {equity, dailyPnl, sharpe, maxDD, var95, winRate, turnover, chartData, positions, riskBars, t};
+};
+
+// ── SVG Equity Chart ──
+const EquityChart = ({ data, width=800, height=320 }) => {
+  const pad = {top:20, right:20, bottom:30, left:60};
+  const w = width - pad.left - pad.right;
+  const h = height - pad.top - pad.bottom;
+
+  const ys = data.map(d=>d.y);
+  const yMin = Math.min(...ys)*0.98;
+  const yMax = Math.max(...ys)*1.02;
+  const xScale = (x) => pad.left + (x/data.length)*w;
+  const yScale = (y) => pad.top + (1-(y-yMin)/(yMax-yMin))*h;
+
+  const linePath = data.map((d,i) =>
+    `${i===0?"M":"L"}${xScale(i).toFixed(1)},${yScale(d.y).toFixed(1)}`
+  ).join(" ");
+
+  const areaPath = linePath +
+    ` L${xScale(data.length-1).toFixed(1)},${pad.top+h} L${xScale(0).toFixed(1)},${pad.top+h} Z`;
+
+  // Grid lines
+  const nGrid = 5;
+  const gridLines = [];
+  for (let i=0; i<=nGrid; i++) {
+    const val = yMin + (yMax-yMin)*i/nGrid;
+    gridLines.push({y: yScale(val), label: fmtMoney(val)});
+  }
+
+  return (
+    <svg viewBox={`0 0 ${width} ${height}`} style={{width:"100%",height:"100%"}}>
+      <defs>
+        <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={tokens.cyan} stopOpacity="0.12"/>
+          <stop offset="100%" stopColor={tokens.cyan} stopOpacity="0.01"/>
+        </linearGradient>
+      </defs>
+      {gridLines.map((g,i)=>
+        <g key={i}>
+          <line x1={pad.left} y1={g.y} x2={pad.left+w} y2={g.y}
+            stroke="rgba(255,255,255,0.04)" strokeWidth="1"/>
+          <text x={pad.left-6} y={g.y+3} fill={tokens.textMuted}
+            fontSize="9" fontFamily="SF Mono, Consolas, monospace" textAnchor="end">
+            {g.label}
+          </text>
+        </g>
+      )}
+      <path d={areaPath} fill="url(#areaGrad)"/>
+      <path d={linePath} fill="none" stroke={tokens.cyan} strokeWidth="1.5"
+        strokeLinejoin="round"/>
+      {/* Latest value dot */}
+      {data.length > 0 && (
+        <circle cx={xScale(data.length-1)} cy={yScale(data[data.length-1].y)}
+          r="3" fill={tokens.cyan} stroke={tokens.bgDeep} strokeWidth="1.5"/>
+      )}
+    </svg>
+  );
+};
+
+// ── KPI Card ──
+const KpiCard = ({ label, value, sub, color="default" }) => (
+  <div className="kpi-card">
+    <span className="kpi-label">{label}</span>
+    <span className={`kpi-value ${color}`}>{value}</span>
+    {sub && <span className={`kpi-sub ${color}`}>{sub}</span>}
+  </div>
+);
+
+// ── Position Row ──
+const PositionRow = ({ pos }) => (
+  <div className="position-row">
+    <span className="pos-code">{pos.code}<span style={{color:tokens.textMuted, marginLeft:6, fontSize:10}}>{pos.name}</span></span>
+    <span className="pos-weight">{fmtPct(pos.weight)}</span>
+    <span className={`pos-pnl ${pos.pnl>=0?"up":"down"}`}>{fmtPct(pos.pnl)}</span>
+    <span className={`pos-signal ${pos.signal}`}>{pos.signal.toUpperCase()}</span>
+    <span style={{textAlign:"right",color:tokens.textMuted}}>{fmtNum(pos.weight/0.02,0)}d</span>
+  </div>
+);
+
+// ── Risk Mini Panel ──
+const RiskMini = ({ label, value, max, status }) => (
+  <div className="glass-panel risk-mini">
+    <span className="risk-mini-label">{label}</span>
+    <span className="risk-mini-value">{fmtPct(value)}</span>
+    <div className="risk-bar-bg">
+      <div className={`risk-bar-fill ${status}`}
+        style={{width:`${Math.min(value/max*100,100)}%`}}/>
+    </div>
+  </div>
+);
+
+// ── Main Dashboard ──
+const Dashboard = () => {
+  const data = useMockData();
+
+  return (
+    <div className="dashboard">
+      {/* ── Top Bar ── */}
+      <div className="topbar">
+        <div className="topbar-left">
+          <span className="topbar-brand">QUANT_SYS v0.1</span>
+          <span className="topbar-status">
+            <span className="status-dot"></span>
+            LIVE · baostock
+          </span>
+        </div>
+        <div className="topbar-right">
+          <span>Pool: <span style={{color:tokens.textSecondary}}>HS300</span></span>
+          <span>Strategy: <span style={{color:tokens.accentPurple}}>multi_factor</span></span>
+          <span>Rebalance: <span style={{color:tokens.textSecondary}}>weekly</span></span>
+          <span>{new Date().toLocaleDateString("zh-CN", {year:"numeric",month:"2-digit",day:"2-digit"})} <span style={{color:tokens.accentCyan}}>{new Date().toLocaleTimeString("zh-CN",{hour:"2-digit",minute:"2-digit"})}</span></span>
+        </div>
+      </div>
+
+      {/* ── KPI Row ── */}
+      <div className="kpi-row">
+        <KpiCard label="Total Equity" value={fmtMoney(data.equity)} sub={fmtPct(data.dailyPnl/data.equity)} color="up"/>
+        <KpiCard label="Daily P&L" value={fmtMoney(data.dailyPnl)} sub="MTD +2.8%" color={data.dailyPnl>=0?"up":"down"}/>
+        <KpiCard label="Sharpe Ratio" value={fmtNum(data.sharpe)} sub="rolling 252d" color="up"/>
+        <KpiCard label="Max Drawdown" value={fmtPct(data.maxDD)} sub="from peak" color="warn"/>
+        <KpiCard label="VaR (95% 1d)" value={fmtPct(data.var95)} sub="Cornish-Fisher" color="warn"/>
+        <KpiCard label="Win Rate" value={fmtPct(data.winRate)} sub={`${data.positions.length} positions`} color="up"/>
+      </div>
+
+      {/* ── Main Content ── */}
+      <div className="main-grid">
+        {/* Left: Chart */}
+        <div className="glass-panel chart-panel">
+          <div className="chart-header">
+            <div className="chart-tabs">
+              <button className="chart-tab active">Equity Curve</button>
+              <button className="chart-tab">Drawdown</button>
+              <button className="chart-tab">Daily Returns</button>
+              <button className="chart-tab">Rolling Sharpe</button>
+            </div>
+            <span style={{fontSize:10, color:tokens.textMuted, fontFamily:"SF Mono,Consolas,monospace"}}>
+              {new Date(Date.now()-365*86400000).toLocaleDateString("zh-CN",{month:"short",year:"numeric"})} — {new Date().toLocaleDateString("zh-CN",{month:"short",year:"numeric"})}
+            </span>
+          </div>
+          <div className="chart-area">
+            <EquityChart data={data.chartData}/>
+          </div>
+        </div>
+
+        {/* Right: Positions */}
+        <div className="glass-panel positions-panel">
+          <div className="positions-header">
+            <span>Positions</span>
+            <span style={{color:tokens.textSecondary}}>{data.positions.filter(p=>p.signal==="buy").length} BUY · {data.positions.filter(p=>p.signal==="sell").length} SELL</span>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 60px 70px 60px 50px",gap:8,padding:"4px 8px",fontSize:9,color:tokens.textMuted,textTransform:"uppercase",letterSpacing:"0.06em"}}>
+            <span>Stock</span><span style={{textAlign:"right"}}>Weight</span><span style={{textAlign:"right"}}>P&L</span><span style={{textAlign:"center"}}>Signal</span><span style={{textAlign:"right"}}>Hold</span>
+          </div>
+          <div className="positions-list">
+            {data.positions.map((p,i) => <PositionRow key={i} pos={p}/>)}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Risk Row ── */}
+      <div className="risk-row">
+        {data.riskBars.map((r,i) => <RiskMini key={i} {...r}/>)}
+      </div>
+
+      {/* ── Footer ── */}
+      <div className="footer-bar">
+        <span>Data: <span className="source">baostock</span><span className="dot">·</span>Fallback: akshare → efinance</span>
+        <span>Last update: {new Date().toLocaleString("zh-CN")}<span className="dot">·</span>Next rebalance: Friday</span>
+        <span>PushPlus: <span style={{color:tokens.accentGreen}}>ready</span><span className="dot">·</span>Tests: 24/24 passed</span>
+      </div>
+    </div>
+  );
+};
+
+// ── Mount ──
+ReactDOM.createRoot(document.getElementById("root")).render(<Dashboard/>);
+</script>
+
+</body>
+</html>

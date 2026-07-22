@@ -1,0 +1,70 @@
+# Quant System Configuration
+# ============================
+# Edit this file to customize the system for your needs.
+
+# Stock universe: "hs300" | "csi500" | "hs300,csi500"
+stock_pool_index: "hs300"
+
+# ── Data Sources ───────────────────────────────────────────
+data_source:
+  primary: "baostock"              # baostock | tushare | akshare | efinance
+  fallback_chain:
+    - "baostock"
+    - "akshare"
+    - "efinance"
+  tushare_token: ""                # Required only for tushare
+  cache_dir: "quant_system/data/.cache"
+  max_retries: 2
+  request_delay: 0.1
+
+# ── Trading Costs ──────────────────────────────────────────
+costs:
+  commission_rate: 0.00025       # 0.025% per side
+  stamp_tax_rate: 0.001          # 0.1% sell only (A-share)
+  min_commission: 5.0            # Minimum 5 RMB
+  slippage_rate: 0.001           # 0.1% per side
+
+# ── Risk Limits ────────────────────────────────────────────
+risk_limits:
+  max_single_position: 0.10      # Max 10% in one stock
+  max_sector_exposure: 0.30      # Max 30% in one sector
+  max_drawdown_limit: 0.25       # Global drawdown halt
+  max_leverage: 1.0              # No leverage
+  var_confidence: 0.95           # VaR confidence level
+  stop_loss_pct: 0.08            # Hard stop at -8%
+  take_profit_pct: 0.25          # Take profit at +25%
+  trailing_stop_pct: 0.06        # Trailing stop at 6%
+
+# ── Backtest ───────────────────────────────────────────────
+backtest:
+  initial_capital: 1000000       # 1M RMB
+  start_date: "2020-01-01"
+  end_date: "2025-12-31"
+  benchmark: "000300.SH"         # CSI 300
+  rebalance_freq: "weekly"       # daily | weekly | monthly
+  t_plus_one: true
+  position_method: "equal_weight"
+  walk_forward_train: 504        # ~2 years trading days
+  walk_forward_test: 126         # ~6 months
+  monte_carlo_sims: 1000
+  min_trades_for_significance: 30
+
+# ── Factor Model ───────────────────────────────────────────
+factor:
+  momentum_periods: [20, 60, 120]
+  value_metrics: ["pe", "pb", "ps", "dy"]
+  quality_metrics: ["roe", "gross_margin", "debt_ratio"]
+  volatility_periods: [20, 60]
+  ic_test_horizons: [1, 5, 10, 20]
+  neutralization: true
+  winsorize_pct: 0.01
+  min_stocks_per_quantile: 5
+
+# ── Live Signal Generation ─────────────────────────────────
+live:
+  pushplus_token: ""             # Fill in your PushPlus token
+  pushplus_topic: ""             # Optional: PushPlus topic ID
+  signal_day: "Friday"
+  top_n_stocks: 10
+  min_signal_strength: 0.3
+  weekly_refresh_stock_pool: true
