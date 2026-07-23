@@ -16,6 +16,8 @@ from datetime import datetime, timezone, timedelta
 BJT = timezone(timedelta(hours=8))  # Beijing time
 from collections import Counter
 
+C = {}
+
 CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.strategy_cache')
 START = pd.Timestamp('2026-06-01')
 END = pd.Timestamp('2026-07-10')
