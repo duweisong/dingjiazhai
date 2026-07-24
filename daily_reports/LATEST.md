@@ -16,4 +16,4 @@
 | 44笔 | 34% | +11.8% | -6.9% | 1.7 |
 
 ---
-*2026-07-23 08:46 北京时间 自动生成 | V4.7 | FactorV2+DynTP+MinScore+Cooldown+DownBrake | 仅供参考*
+*2026-07-24 19:37 北京时间 自动生成 | V4.7 | FactorV2+DynTP+MinScore+Cooldown+DownBrake | 仅供参考*
